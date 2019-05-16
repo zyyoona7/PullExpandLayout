@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="pull_expand_layout_header" type="id"/>
+    <item name="pull_expand_layout_footer" type="id"/>
+    <item name="pull_expand_layout_content" type="id"/>
+</resources>

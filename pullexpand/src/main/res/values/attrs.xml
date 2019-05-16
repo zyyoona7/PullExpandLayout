@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="HeaderFooterLayout">
+        <attr name="android:orientation" />
+    </declare-styleable>
+    <declare-styleable name="PullExpandLayout">
+        <!--布局、id相关-->
+        <attr name="pel_headerLayoutId" format="reference" />
+        <attr name="pel_headerId" format="reference" />
+        <attr name="pel_contentId" format="reference" />
+        <attr name="pel_footerLayoutId" format="reference" />
+        <attr name="pel_footerId" format="reference" />
+        <!--属性相关-->
+        <attr name="pel_dragRate" format="float" />
+        <attr name="pel_dragType" format="enum">
+            <enum name="translate" value="0" />
+            <enum name="fixed_behind" value="1" />
+            <enum name="fixed_foreground" value="2" />
+        </attr>
+        <attr name="pel_headerDragThreshold" format="dimension" />
+        <attr name="pel_footerDragThreshold" format="dimension" />
+        <attr name="pel_headerMaxDragDistance" format="dimension" />
+        <attr name="pel_footerMaxDragDistance" format="dimension" />
+        <attr name="pel_headerEnabled" format="boolean" />
+        <attr name="pel_footerEnabled" format="boolean" />
+    </declare-styleable>
+</resources>
