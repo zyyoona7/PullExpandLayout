@@ -14,6 +14,9 @@ import android.view.ViewConfiguration;
 import android.widget.Scroller;
 
 
+import com.zyyoona7.pullexpand.listener.OnPullExpandChangedListener;
+import com.zyyoona7.pullexpand.listener.OnPullExpandStateListener;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 

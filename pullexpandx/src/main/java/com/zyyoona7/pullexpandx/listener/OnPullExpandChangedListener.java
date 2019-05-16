@@ -1,4 +1,6 @@
-package com.zyyoona7.pullexpandx;
+package com.zyyoona7.pullexpandx.listener;
+
+import com.zyyoona7.pullexpandx.PullExpandLayout;
 
 public interface OnPullExpandChangedListener {
 

@@ -14,6 +14,9 @@ import android.widget.Scroller;
 import androidx.annotation.FloatRange;
 import androidx.annotation.IntDef;
 
+import com.zyyoona7.pullexpandx.listener.OnPullExpandChangedListener;
+import com.zyyoona7.pullexpandx.listener.OnPullExpandStateListener;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 

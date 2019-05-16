@@ -1,4 +1,6 @@
-package com.zyyoona7.pullexpand;
+package com.zyyoona7.pullexpandx.listener;
+
+import com.zyyoona7.pullexpandx.PullExpandLayout;
 
 /**
  * 状态改变
