@@ -33,6 +33,8 @@ public class PullExpandLayout extends HeaderFooterLayout {
 
     private static final String TAG = "PullExpandLayout";
 
+    // TODO: 2019-05-17 仿微信游戏视觉差效果，横向拖拽
+
     //阻尼效果比率 0-1之间，越大越顺畅
     private static final float DEFAULT_DRAG_RATE = 0.4f;
     //拖拽类型
