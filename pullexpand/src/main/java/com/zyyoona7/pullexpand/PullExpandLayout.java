@@ -1,5 +1,6 @@
 package com.zyyoona7.pullexpand;
 
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -20,6 +21,8 @@ import com.zyyoona7.pullexpand.listener.OnPullExpandStateListener;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 拖拽展开布局
@@ -132,8 +135,8 @@ public class PullExpandLayout extends HeaderFooterLayout {
 //    private float mCurrentVelocityY;
 //    private float mCurrentVelocityX;
 
-    private OnPullExpandChangedListener mOnPullExpandChangedListener;
-    private OnPullExpandStateListener mOnPullExpandStateListener;
+    private List<OnPullExpandChangedListener> mOnPullExpandChangedListeners;
+    private List<OnPullExpandStateListener> mOnPullExpandStateListeners;
     //当前Header的状态
     private int mCurrentHeaderState = STATE_COLLAPSED;
     //当前Footer的状态
@@ -566,10 +569,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
                     Log.d(TAG, "onTouchEvent ACTION_UP.." + getScrollY());
                 }
                 computeScrollYToState(true);
-                if (mOnPullExpandChangedListener != null) {
-                    mOnPullExpandChangedListener.onReleased(this,
-                            mOrientation == VERTICAL ? getScrollY() : getScrollX());
-                }
+                callReleaseChangedListeners();
                 mVelocityTracker.clear();//清空速度追踪器
                 break;
             case MotionEvent.ACTION_CANCEL:
@@ -949,25 +949,9 @@ public class PullExpandLayout extends HeaderFooterLayout {
             mCurrentFooterState = STATE_COLLAPSED;
         }
 
-        if (mOnPullExpandChangedListener != null) {
-            if (mHeaderView != null) {
-                mOnPullExpandChangedListener.onHeaderStateChanged(this, mCurrentHeaderState);
-            }
+        callHeaderAndFooterChangedListenersVertical(false, -1);
 
-            if (mFooterView != null) {
-                mOnPullExpandChangedListener.onFooterStateChanged(this, mCurrentFooterState);
-            }
-        }
-
-        if (mOnPullExpandStateListener != null) {
-            if (mHeaderView != null && lastHeaderState != mCurrentHeaderState) {
-                mOnPullExpandStateListener.onHeaderStateChanged(this, mCurrentHeaderState);
-            }
-
-            if (mFooterView != null && lastFooterState != mCurrentFooterState) {
-                mOnPullExpandStateListener.onFooterStateChanged(this, mCurrentFooterState);
-            }
-        }
+        callHeaderAndFooterStateListeners(lastHeaderState, lastFooterState);
     }
 
     /**
@@ -1054,19 +1038,8 @@ public class PullExpandLayout extends HeaderFooterLayout {
             } else if (isCollapsing) {
                 mCurrentHeaderState = STATE_COLLAPSING;
             }
-            if (mOnPullExpandChangedListener != null && mHeaderView != null) {
-                if (isCallMoving) {
-                    mOnPullExpandChangedListener.onHeaderMoving(mOrientation,
-                            absScrollY * 1.0f / mHeaderHeight, absScrollY,
-                            mHeaderHeight, mHeaderMaxDragDistance);
-                }
-                mOnPullExpandChangedListener.onHeaderStateChanged(this, mCurrentHeaderState);
-            }
-            //只有不相等的时候才调用
-            if (mOnPullExpandStateListener != null && mHeaderView != null
-                    && lastHeaderState != mCurrentHeaderState) {
-                mOnPullExpandStateListener.onHeaderStateChanged(this, mCurrentHeaderState);
-            }
+            callHeaderChangedListenersVertical(isCallMoving, absScrollY);
+            callHeaderStateListeners(lastHeaderState);
         } else if (getScrollY() > 0) {
             //操作Footer
             int lastFooterState = mCurrentFooterState;
@@ -1075,52 +1048,201 @@ public class PullExpandLayout extends HeaderFooterLayout {
             } else if (isCollapsing) {
                 mCurrentFooterState = STATE_COLLAPSING;
             }
-            if (mOnPullExpandChangedListener != null && mFooterView != null) {
-                if (isCallMoving) {
-                    mOnPullExpandChangedListener.onFooterMoving(mOrientation,
-                            absScrollY * 1.0f / mFooterHeight, absScrollY,
-                            mFooterHeight, mFooterMaxDragDistance);
-                }
-                mOnPullExpandChangedListener.onFooterStateChanged(this, mCurrentFooterState);
-            }
-            //只有不相等的时候才调用
-            if (mOnPullExpandStateListener != null && mFooterView != null
-                    && lastFooterState != mCurrentFooterState) {
-                mOnPullExpandStateListener.onFooterStateChanged(this, mCurrentFooterState);
-            }
+            callFooterChangedListenersVertical(isCallMoving, absScrollY);
+            callFooterStateListeners(lastFooterState);
         } else {
             //还原 Header Footer 都收起了
             int lastHeaderState = mCurrentHeaderState;
             int lastFooterState = mCurrentFooterState;
             mCurrentHeaderState = STATE_COLLAPSED;
             mCurrentFooterState = STATE_COLLAPSED;
-            if (mOnPullExpandChangedListener != null) {
-                if (mHeaderView != null) {
-                    if (isCallMoving) {
-                        mOnPullExpandChangedListener.onHeaderMoving(mOrientation, scrollY * 1.0f / mHeaderHeight,
-                                scrollY, mHeaderHeight, mHeaderMaxDragDistance);
-                    }
-                    mOnPullExpandChangedListener.onHeaderStateChanged(this, mCurrentHeaderState);
-                }
-                if (mFooterView != null) {
-                    if (isCallMoving) {
-                        mOnPullExpandChangedListener.onFooterMoving(mOrientation, scrollY * 1.0f / mFooterHeight,
-                                scrollY, mFooterHeight, mFooterMaxDragDistance);
-                    }
-                    mOnPullExpandChangedListener.onFooterStateChanged(this, mCurrentFooterState);
-                }
-            }
+            callHeaderAndFooterChangedListenersVertical(isCallMoving, scrollY);
+            callHeaderAndFooterStateListeners(lastHeaderState, lastFooterState);
+        }
+    }
 
-            //只有不相等的时候才调用
-            if (mOnPullExpandStateListener != null) {
-                if (mHeaderView != null && lastHeaderState != mCurrentHeaderState) {
-                    mOnPullExpandStateListener.onHeaderStateChanged(this, mCurrentHeaderState);
+    /**
+     * 执行垂直方向 Header 状态变化回调
+     *
+     * @param isCallMoving 是否回调 onHeaderMoving 方法
+     * @param absScrollY   scrollY 的绝对值
+     */
+    private void callHeaderChangedListenersVertical(boolean isCallMoving, int absScrollY) {
+        callHeaderAndFooterChangedListeners(isCallMoving, absScrollY, true, mHeaderHeight,
+                false, mFooterHeight);
+    }
+
+    /**
+     * 执行垂直方向 Footer 状态变化回调
+     *
+     * @param isCallMoving 是否回调 onFooterMoving 方法
+     * @param absScrollY   scroll 绝对值
+     */
+    private void callFooterChangedListenersVertical(boolean isCallMoving, int absScrollY) {
+        callHeaderAndFooterChangedListeners(isCallMoving, absScrollY, false, mHeaderHeight,
+                true, mFooterHeight);
+    }
+
+    /**
+     * 执行垂直方向 Header Footer 状态变化回调
+     *
+     * @param isCallMoving 是否回调 onXxMoving 方法
+     * @param scrollY      scrollY
+     */
+    private void callHeaderAndFooterChangedListenersVertical(boolean isCallMoving, int scrollY) {
+        callHeaderAndFooterChangedListeners(isCallMoving, scrollY, true,
+                mHeaderHeight, true, mFooterHeight);
+    }
+
+    /**
+     * 执行 Header Footer 状态变化回调
+     *
+     * @param isCallMoving        是否回调 onXxMoving 方法
+     * @param scrollYOrX          scrollY or scrollX
+     * @param isCallHeader        是否回调 Header 方法
+     * @param headerHeightOrWidth orientation==VERTICAL headerHeight else headerWidth
+     * @param isCallFooter        是否回调 Footer 方法
+     * @param footerHeightOrWidth orientation==VERTICAL footerHeight else footerWidth
+     */
+    private void callHeaderAndFooterChangedListeners(boolean isCallMoving, int scrollYOrX,
+                                                     boolean isCallHeader, int headerHeightOrWidth,
+                                                     boolean isCallFooter, int footerHeightOrWidth) {
+        if (mOnPullExpandChangedListeners != null) {
+            for (OnPullExpandChangedListener onPullExpandChangedListener : mOnPullExpandChangedListeners) {
+                if (isCallHeader && mHeaderView != null) {
+                    if (isCallMoving) {
+                        onPullExpandChangedListener.onHeaderMoving(mOrientation, Math.abs(scrollYOrX) * 1.0f / headerHeightOrWidth,
+                                Math.abs(scrollYOrX), headerHeightOrWidth, mHeaderMaxDragDistance);
+                    }
+                    onPullExpandChangedListener.onHeaderStateChanged(this, mCurrentHeaderState);
                 }
-                if (mFooterView != null && lastFooterState != mCurrentFooterState) {
-                    mOnPullExpandStateListener.onFooterStateChanged(this, mCurrentFooterState);
+                if (isCallFooter && mFooterView != null) {
+                    if (isCallMoving) {
+                        onPullExpandChangedListener.onFooterMoving(mOrientation, Math.abs(scrollYOrX) * 1.0f / footerHeightOrWidth,
+                                Math.abs(scrollYOrX), footerHeightOrWidth, mFooterMaxDragDistance);
+                    }
+                    onPullExpandChangedListener.onFooterStateChanged(this, mCurrentFooterState);
                 }
             }
         }
+    }
+
+    /**
+     * 执行 onRelease 回调
+     */
+    private void callReleaseChangedListeners() {
+        if (mOnPullExpandChangedListeners != null) {
+            for (OnPullExpandChangedListener onPullExpandChangedListener : mOnPullExpandChangedListeners) {
+                onPullExpandChangedListener.onReleased(this,
+                        mOrientation == VERTICAL ? getScrollY() : getScrollX());
+            }
+        }
+    }
+
+    /**
+     * 执行 Header 状态回调
+     *
+     * @param lastHeaderState 前一个 Header 的状态
+     */
+    private void callHeaderStateListeners(int lastHeaderState) {
+        callHeaderAndFooterStateListeners(true, lastHeaderState, false, -1);
+    }
+
+    /**
+     * 执行 Footer 状态回调
+     *
+     * @param lastFooterState 前一个 Footer 的状态
+     */
+    private void callFooterStateListeners(int lastFooterState) {
+        callHeaderAndFooterStateListeners(false, lastFooterState, true, lastFooterState);
+    }
+
+    /**
+     * 执行 Header Footer 状态回调
+     *
+     * @param lastHeaderState 前一个 Header 的状态
+     * @param lastFooterState 前一个 Footer 的状态
+     */
+    private void callHeaderAndFooterStateListeners(int lastHeaderState, int lastFooterState) {
+        callHeaderAndFooterStateListeners(true, lastHeaderState,
+                true, lastFooterState);
+    }
+
+    /**
+     * 执行 Header Footer 状态回调
+     *
+     * @param isCallHeader    是否回调 Header 状态方法
+     * @param lastHeaderState 前一个 Header 的状态
+     * @param isCallFooter    是否回调 Footer 状态方法
+     * @param lastFooterState 前一个 Footer 的状态
+     */
+    private void callHeaderAndFooterStateListeners(boolean isCallHeader, int lastHeaderState,
+                                                   boolean isCallFooter, int lastFooterState) {
+        //只有不相等的时候才调用
+        if (mOnPullExpandStateListeners != null) {
+            for (OnPullExpandStateListener onPullExpandStateListener : mOnPullExpandStateListeners) {
+                if (isCallHeader && mHeaderView != null && lastHeaderState != mCurrentHeaderState) {
+                    onPullExpandStateListener.onHeaderStateChanged(this, mCurrentHeaderState);
+                }
+                if (isCallFooter && mFooterView != null && lastFooterState != mCurrentFooterState) {
+                    onPullExpandStateListener.onFooterStateChanged(this, mCurrentFooterState);
+                }
+            }
+        }
+    }
+
+    /**
+     * 获取 Header 高度
+     *
+     * @return Header 高度
+     */
+    public int getHeaderHeight() {
+        return mHeaderHeight;
+    }
+
+    /**
+     * 获取 Header 宽度
+     *
+     * @return Header 宽度
+     */
+    public int getHeaderWidth() {
+        return mHeaderWidth;
+    }
+
+    /**
+     * 获取 Footer 高度
+     *
+     * @return Footer 高度
+     */
+    public int getFooterHeight() {
+        return mFooterHeight;
+    }
+
+    /**
+     * 获取 Footer 宽度
+     *
+     * @return Footer 宽度
+     */
+    public int getFooterWidth() {
+        return mFooterWidth;
+    }
+
+    /**
+     * Header 是否展开
+     *
+     * @return Header 是否展开
+     */
+    public boolean isHeaderExpanded() {
+        return mIsHeaderExpanded;
+    }
+
+    /**
+     * Footer 是否展开
+     *
+     * @return Footer 是否展开
+     */
+    public boolean isFooterExpanded() {
+        return mIsFooterExpanded;
     }
 
     /**
@@ -1202,6 +1324,15 @@ public class PullExpandLayout extends HeaderFooterLayout {
     }
 
     /**
+     * 获取 Header 最大拖动距离
+     *
+     * @return 最大拖动距离
+     */
+    public int getHeaderMaxDragDistance() {
+        return mHeaderMaxDragDistance;
+    }
+
+    /**
      * Footer 最大拖动距离
      *
      * @param footerMaxDragDistance 最大拖动距离
@@ -1210,6 +1341,15 @@ public class PullExpandLayout extends HeaderFooterLayout {
         if (footerMaxDragDistance > 0) {
             mFooterMaxDragDistance = footerMaxDragDistance;
         }
+    }
+
+    /**
+     * 获取 Footer 最大拖动距离
+     *
+     * @return 最大拖动距离
+     */
+    public int getFooterMaxDragDistance() {
+        return mFooterMaxDragDistance;
     }
 
     /**
@@ -1231,22 +1371,71 @@ public class PullExpandLayout extends HeaderFooterLayout {
     }
 
     /**
-     * 设置状态改变监听器
+     * 添加状态变化监听器
      *
-     * @param onPullExpandChangedListener listener
+     * @param listener OnPullExpandChangedListener
      */
-    public void setOnPullExpandChangedListener(OnPullExpandChangedListener onPullExpandChangedListener) {
-        mOnPullExpandChangedListener = onPullExpandChangedListener;
+    public void addOnPullExpandChangedListener(OnPullExpandChangedListener listener) {
+        if (mOnPullExpandChangedListeners == null) {
+            mOnPullExpandChangedListeners = new ArrayList<>();
+        }
+        if (listener != null && !mOnPullExpandChangedListeners.contains(listener)) {
+            mOnPullExpandChangedListeners.add(listener);
+        }
     }
 
     /**
-     * 设置状态监听器
-     * 这个回调对应的方法只有在状态改变的时候回调一次，不会重复回调
+     * 移除状态变化监听器
      *
-     * @param onPullExpandStateListener listener
+     * @param listener OnPullExpandChangedListener
      */
-    public void setOnPullExpandStateListener(OnPullExpandStateListener onPullExpandStateListener) {
-        mOnPullExpandStateListener = onPullExpandStateListener;
+    public void removePullExpandChangedListener(OnPullExpandChangedListener listener) {
+        if (mOnPullExpandChangedListeners != null && listener != null) {
+            mOnPullExpandChangedListeners.remove(listener);
+        }
+    }
+
+    /**
+     * 移除所有状态变化监听器
+     */
+    public void removeAllPullExpandChangedListeners() {
+        if (mOnPullExpandChangedListeners != null) {
+            mOnPullExpandChangedListeners.clear();
+        }
+    }
+
+    /**
+     * 添加状态监听器
+     *
+     * @param listener OnPullExpandStateListener
+     */
+    public void addOnPullExpandStateListener(OnPullExpandStateListener listener) {
+        if (mOnPullExpandStateListeners == null) {
+            mOnPullExpandStateListeners = new ArrayList<>();
+        }
+        if (listener != null && !mOnPullExpandStateListeners.contains(listener)) {
+            mOnPullExpandStateListeners.add(listener);
+        }
+    }
+
+    /**
+     * 移除状态监听器
+     *
+     * @param listener OnPullExpandStateListener
+     */
+    public void removePullExpandStateListener(OnPullExpandStateListener listener) {
+        if (mOnPullExpandStateListeners != null && listener != null) {
+            mOnPullExpandStateListeners.remove(listener);
+        }
+    }
+
+    /**
+     * 移除所有状态监听器
+     */
+    public void removeAllPullExpandStateListeners() {
+        if (mOnPullExpandStateListeners != null) {
+            mOnPullExpandStateListeners.clear();
+        }
     }
 
     /**
@@ -1272,8 +1461,8 @@ public class PullExpandLayout extends HeaderFooterLayout {
      *
      * @param isExpand 是否展开
      */
-    public void setHeaderExpand(boolean isExpand) {
-        setHeaderExpand(isExpand, true);
+    public void setHeaderExpanded(boolean isExpand) {
+        setHeaderExpanded(isExpand, true);
     }
 
     /**
@@ -1282,7 +1471,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
      * @param isExpand 是否展开
      * @param isAnim   是否伴随动画
      */
-    public void setHeaderExpand(boolean isExpand, boolean isAnim) {
+    public void setHeaderExpanded(boolean isExpand, boolean isAnim) {
         if (isExpand) {
             if (mOrientation == VERTICAL) {
                 openHeaderVertical(isAnim);
@@ -1299,8 +1488,8 @@ public class PullExpandLayout extends HeaderFooterLayout {
      *
      * @param isExpand 是否展开
      */
-    public void setFooterExpand(boolean isExpand) {
-        setFooterExpand(isExpand, true);
+    public void setFooterExpanded(boolean isExpand) {
+        setFooterExpanded(isExpand, true);
     }
 
     /**
@@ -1309,7 +1498,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
      * @param isExpand 是否展开
      * @param isAnim   是否伴随动画
      */
-    public void setFooterExpand(boolean isExpand, boolean isAnim) {
+    public void setFooterExpanded(boolean isExpand, boolean isAnim) {
         if (isExpand) {
             if (mOrientation == VERTICAL) {
                 openFooterVertical(isAnim);

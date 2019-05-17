@@ -28,8 +28,8 @@ public class MainActivity extends AppCompatActivity {
 
         PullExpandLayout expandLayout = findViewById(R.id.pull_expand_layout);
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
-        final TextView header1=findViewById(R.id.tv_header_1);
-        final TextView header2=findViewById(R.id.tv_header_2);
+        final TextView header1 = findViewById(R.id.tv_header_1);
+        final TextView header2 = findViewById(R.id.tv_header_2);
 
         header1.postDelayed(new Runnable() {
             @Override
@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
                 header1.setVisibility(View.GONE);
                 header2.setVisibility(View.VISIBLE);
             }
-        },3000);
+        }, 3000);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
@@ -46,27 +46,30 @@ public class MainActivity extends AppCompatActivity {
         dividerItemDecoration.setDrawable(dividerDrawable);
         recyclerView.addItemDecoration(dividerItemDecoration);
         recyclerView.setAdapter(MainAdapter.newInstance(30));
-        expandLayout.setOnPullExpandChangedListener(new SimpleOnPullExpandChangedListener() {
+        expandLayout.addOnPullExpandChangedListener(new SimpleOnPullExpandChangedListener() {
 
             @Override
             public void onHeaderMoving(int orientation, float percent, int offset, int heightOrWidth, int maxDragDistance) {
-                Log.d(TAG,"onHeaderMoving percent:"+percent+",offset:"+offset+",height:"+heightOrWidth);
+                Log.d(TAG, "onHeaderMoving percent:" + percent + ",offset:" + offset + ",height:" + heightOrWidth);
             }
 
             @Override
             public void onHeaderStateChanged(PullExpandLayout layout, int state) {
-                Log.d(TAG,"onHeaderStateChanged state:"+state);
+                Log.d(TAG, "onHeaderStateChanged state:" + state);
             }
 
             @Override
             public void onReleased(PullExpandLayout layout, int currentOffset) {
-                if (layout.getCurrentHeaderState()== PullExpandLayout.STATE_EXPANDED) {
-                    layout.setHeaderExpand(false);
+                Log.d(TAG, "onReleased: currentOffset:"
+                        + currentOffset + ",header height:" + layout.getHeaderHeight());
+                if (layout.isHeaderExpanded() && currentOffset < 0
+                        && Math.abs(currentOffset) > layout.getHeaderHeight() + 10) {
+                    layout.setHeaderExpanded(false);
                 }
             }
         });
 
-        expandLayout.setOnPullExpandStateListener(new SimpleOnPullExpandStateListener() {
+        expandLayout.addOnPullExpandStateListener(new SimpleOnPullExpandStateListener() {
 
         });
     }

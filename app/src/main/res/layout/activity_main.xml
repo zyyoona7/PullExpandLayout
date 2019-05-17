@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     tools:context=".MainActivity">
 
@@ -16,7 +17,8 @@
     <com.zyyoona7.pullexpandx.PullExpandLayout
         android:id="@+id/pull_expand_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        app:pel_headerMaxDragDistanceRate="1.3">
 
         <FrameLayout
             android:layout_width="match_parent"
