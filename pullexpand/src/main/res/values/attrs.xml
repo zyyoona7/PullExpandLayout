@@ -18,9 +18,13 @@
             <enum name="fixed_foreground" value="2" />
         </attr>
         <attr name="pel_headerDragThreshold" format="dimension" />
+        <attr name="pel_headerDragThresholdRate" format="float" />
         <attr name="pel_footerDragThreshold" format="dimension" />
+        <attr name="pel_footerDragThresholdRate" format="float" />
         <attr name="pel_headerMaxDragDistance" format="dimension" />
+        <attr name="pel_headerMaxDragDistanceRate" format="float" />
         <attr name="pel_footerMaxDragDistance" format="dimension" />
+        <attr name="pel_footerMaxDragDistanceRate" format="float" />
         <attr name="pel_headerEnabled" format="boolean" />
         <attr name="pel_footerEnabled" format="boolean" />
     </declare-styleable>

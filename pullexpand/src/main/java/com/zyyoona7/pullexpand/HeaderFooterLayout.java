@@ -5,6 +5,7 @@ import android.content.res.TypedArray;
 import android.support.annotation.IdRes;
 import android.support.annotation.IntDef;
 import android.support.annotation.LayoutRes;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -20,7 +21,7 @@ import java.lang.annotation.RetentionPolicy;
  * @author zyyoona7
  * @since 2019/5/15
  */
-public abstract class HeaderFooterLayout extends ViewGroup {
+public abstract class HeaderFooterLayout extends ViewGroup implements View.OnLayoutChangeListener {
 
     public static final int HORIZONTAL = 0;
     public static final int VERTICAL = 1;
@@ -103,6 +104,32 @@ public abstract class HeaderFooterLayout extends ViewGroup {
     }
 
     @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (mHeaderView != null) {
+            mHeaderView.removeOnLayoutChangeListener(this);
+            mHeaderView.addOnLayoutChangeListener(this);
+        }
+
+        if (mFooterView != null) {
+            mFooterView.removeOnLayoutChangeListener(this);
+            mFooterView.addOnLayoutChangeListener(this);
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (mHeaderView != null) {
+            mHeaderView.removeOnLayoutChangeListener(this);
+        }
+
+        if (mFooterView != null) {
+            mFooterView.removeOnLayoutChangeListener(this);
+        }
+    }
+
+    @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
@@ -180,6 +207,34 @@ public abstract class HeaderFooterLayout extends ViewGroup {
     public LayoutParams generateLayoutParams(AttributeSet attrs) {
         final View thisView = this;
         return new MarginLayoutParams(thisView.getContext(), attrs);
+    }
+
+    @Override
+    public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                               int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        if (v == null) {
+            return;
+        }
+        if ((oldTop != 0 && oldTop != top) || (oldBottom != 0 && oldBottom != bottom)
+                || (oldLeft != 0 && oldLeft != left) || (oldRight != 0 && oldRight != right)) {
+            if (v == mHeaderView) {
+                onHeaderLayoutChanged(mHeaderView, left, top, right,
+                        bottom, oldLeft, oldTop, oldRight, oldBottom);
+            } else if (v == mFooterView) {
+                onFooterLayoutChanged(mFooterView, left, top, right,
+                        bottom, oldLeft, oldTop, oldRight, oldBottom);
+            }
+        }
+    }
+
+    protected void onHeaderLayoutChanged(@NonNull View headerView, int left, int top, int right, int bottom,
+                                         int oldLeft, int oldTop, int oldRight, int oldBottom) {
+
+    }
+
+    protected void onFooterLayoutChanged(@NonNull View footerView, int left, int top, int right, int bottom,
+                                         int oldLeft, int oldTop, int oldRight, int oldBottom) {
+
     }
 
     protected LayoutInflater getLayoutInflater() {
