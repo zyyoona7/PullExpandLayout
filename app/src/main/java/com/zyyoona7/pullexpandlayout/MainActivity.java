@@ -57,6 +57,13 @@ public class MainActivity extends AppCompatActivity {
             public void onHeaderStateChanged(PullExpandLayout layout, int state) {
                 Log.d(TAG,"onHeaderStateChanged state:"+state);
             }
+
+            @Override
+            public void onReleased(PullExpandLayout layout, int currentOffset) {
+                if (layout.getCurrentHeaderState()== PullExpandLayout.STATE_EXPANDED) {
+                    layout.setHeaderExpand(false);
+                }
+            }
         });
 
         expandLayout.setOnPullExpandStateListener(new SimpleOnPullExpandStateListener() {

@@ -15,6 +15,11 @@ public class SimpleOnPullExpandChangedListener implements OnPullExpandChangedLis
     }
 
     @Override
+    public void onReleased(PullExpandLayout layout, int currentOffset) {
+
+    }
+
+    @Override
     public void onHeaderStateChanged(PullExpandLayout layout, int state) {
 
     }

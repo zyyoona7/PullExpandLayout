@@ -35,7 +35,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
 
     private static final String TAG = "PullExpandLayout";
 
-    // TODO: 2019-05-17 仿微信游戏视觉差效果，横向拖拽
+    // TODO: 2019-05-17 仿微信游戏视觉差效果，横向拖拽，已经展开二次下拉关闭（类似微信视频动态）
 
     //阻尼效果比率 0-1之间，越大越顺畅
     private static final float DEFAULT_DRAG_RATE = 0.4f;
@@ -567,6 +567,10 @@ public class PullExpandLayout extends HeaderFooterLayout {
                     Log.d(TAG, "onTouchEvent ACTION_UP.." + getScrollY());
                 }
                 computeScrollYToState(true);
+                if (mOnPullExpandChangedListener != null) {
+                    mOnPullExpandChangedListener.onReleased(this,
+                            mOrientation == VERTICAL ? getScrollY() : getScrollX());
+                }
                 mVelocityTracker.clear();//清空速度追踪器
                 break;
             case MotionEvent.ACTION_CANCEL:
@@ -898,14 +902,16 @@ public class PullExpandLayout extends HeaderFooterLayout {
         mIsInSelfControl = false;
         //header完全展开了，并且向上推的高度>mHeaderShownThreshold 表示关闭
         if (mIsHeaderExpanded && getScrollY() < 0
-                && getScrollY() < -mHeaderDragThreshold
-                && getScrollY() > -mHeaderHeight && mCurrentHeaderState == STATE_COLLAPSING) {
+                && mHeaderHeight + getScrollY() > mHeaderDragThreshold
+                && Math.abs(getScrollY()) < mHeaderHeight
+                && mCurrentHeaderState == STATE_COLLAPSING) {
             closeHeaderOrFooterVertical(isAnimateScroll);
             return;
         }
         //footer完全展开了，并且向下推的高度>mFooterShownThreshold 表示关闭
         if (mIsFooterExpanded && getScrollY() > 0
                 && mFooterHeight - getScrollY() > mFooterDragThreshold
+                && getScrollY() < mFooterHeight
                 && mCurrentFooterState == STATE_COLLAPSING) {
             closeHeaderOrFooterVertical(isAnimateScroll);
             return;

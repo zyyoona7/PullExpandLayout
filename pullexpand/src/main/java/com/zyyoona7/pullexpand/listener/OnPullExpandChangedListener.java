@@ -29,6 +29,14 @@ public interface OnPullExpandChangedListener {
                         int offset, int heightOrWidth, int maxDragDistance);
 
     /**
+     * 手指弹起时释放时刻
+     *
+     * @param layout        PullExpandLayout
+     * @param currentOffset 当前的偏移 <0 Header 被拉出来了 >0 Footer 被拉出来了
+     */
+    void onReleased(PullExpandLayout layout, int currentOffset);
+
+    /**
      * Header 状态变化
      *
      * @param layout PullExpandLayout
