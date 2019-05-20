@@ -34,6 +34,7 @@ public class VerticalActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         final PullExpandLayout expandLayout = findViewById(R.id.pull_expand_layout);
+        expandLayout.setDebug(true);
         expandLayout.setPullExpandTransformer(
                 new ParallaxGamePullExpandTransformer(ConvertUtils.dp2px(50f),
                         ConvertUtils.dp2px(130f)));
@@ -89,6 +90,11 @@ public class VerticalActivity extends AppCompatActivity {
             @Override
             public void onHeaderMoving(int orientation, float percent, int offset, int heightOrWidth, int maxDragDistance) {
                 Log.d(TAG, "onHeaderMoving percent:" + percent + ",offset:" + offset + ",height:" + heightOrWidth);
+            }
+
+            @Override
+            public void onFooterMoving(int orientation, float percent, int offset, int heightOrWidth, int maxDragDistance) {
+                Log.d(TAG, "onFooterMoving percent:" + percent + ",offset:" + offset + ",height:" + heightOrWidth);
             }
 
             @Override

@@ -807,22 +807,22 @@ public class PullExpandLayout extends HeaderFooterLayout {
             mScroller.forceFinished(true);
         }
         //根据下拉高度计算位移距离，（越拉越慢）
-        int moveDyOrDx;
+        float moveDyOrDx;
         float deltaYOrX = isVertical() ? mDeltaY : mDeltaX;
         int scrollYOrX = isVertical() ? getScrollY() : getScrollX();
         if (deltaYOrX > 0) {
             //下滑操作
             if (scrollYOrX <= 0) {
                 //当前需要显示Header
-                moveDyOrDx = (int) ((mHeaderMaxDragDistance + scrollYOrX) * 1.0f
-                        / (mHeaderMaxDragDistance == 0 ? 1f : mHeaderMaxDragDistance) * deltaYOrX * mDragRate);
+                moveDyOrDx = (mHeaderMaxDragDistance + scrollYOrX) * 1.0f
+                        / (mHeaderMaxDragDistance == 0 ? 1f : mHeaderMaxDragDistance) * deltaYOrX * mDragRate;
                 if (mIsDebug) {
                     Log.d(TAG, "doScroll: 下/右滑操作，需要显示Header");
                 }
             } else {
                 //当前需要隐藏Footer
-                moveDyOrDx = (int) ((mFooterMaxDragDistance + scrollYOrX) * 1.0f
-                        / (mFooterMaxDragDistance == 0 ? 1f : mFooterMaxDragDistance) * deltaYOrX * mDragRate);
+                moveDyOrDx = (mFooterMaxDragDistance + scrollYOrX) * 1.0f
+                        / (mFooterMaxDragDistance == 0 ? 1f : mFooterMaxDragDistance) * deltaYOrX * mDragRate;
                 if (mIsDebug) {
                     Log.d(TAG, "doScroll: 下/右滑操作，需要隐藏Footer");
                 }
@@ -831,15 +831,15 @@ public class PullExpandLayout extends HeaderFooterLayout {
             //上滑操作
             if (scrollYOrX >= 0) {
                 //当前需要显示Footer
-                moveDyOrDx = (int) ((mFooterMaxDragDistance - scrollYOrX) * 1.0f
-                        / (mFooterMaxDragDistance == 0 ? 1f : mFooterMaxDragDistance) * deltaYOrX * mDragRate);
+                moveDyOrDx = (mFooterMaxDragDistance - scrollYOrX) * 1.0f
+                        / (mFooterMaxDragDistance == 0 ? 1f : mFooterMaxDragDistance) * deltaYOrX * mDragRate;
                 if (mIsDebug) {
                     Log.d(TAG, "doScroll: 上/左滑操作，需要显示Footer");
                 }
             } else {
                 //当前需要隐藏Header
-                moveDyOrDx = (int) ((mHeaderMaxDragDistance - scrollYOrX) * 1.0f
-                        / (mHeaderMaxDragDistance == 0 ? 1f : mHeaderMaxDragDistance) * deltaYOrX * mDragRate);
+                moveDyOrDx = (mHeaderMaxDragDistance - scrollYOrX) * 1.0f
+                        / (mHeaderMaxDragDistance == 0 ? 1f : mHeaderMaxDragDistance) * deltaYOrX * mDragRate;
                 if (mIsDebug) {
                     Log.d(TAG, "doScroll: 上/左滑操作，需要隐藏Header");
                 }
@@ -848,10 +848,18 @@ public class PullExpandLayout extends HeaderFooterLayout {
         if (mIsDebug) {
             Log.d(TAG, "doScroll -moveDyOrDx:" + (-moveDyOrDx));
         }
+        //负数向上取整,Math.floor(-1.1)=-2, Math.floor(0.1)=0
+        //正数向上取整,Math.ceil(0.1)=1, Math.ceil(-1.1)=-1
+        int dyOrDx = 0;
+        if (moveDyOrDx < 0) {
+            dyOrDx = (int) Math.floor(moveDyOrDx);
+        } else if (moveDyOrDx > 0) {
+            dyOrDx = (int) Math.ceil(moveDyOrDx);
+        }
         if (isVertical()) {
-            scrollBy(0, -moveDyOrDx);
+            scrollBy(0, -dyOrDx);
         } else {
-            scrollBy(-moveDyOrDx, 0);
+            scrollBy(-dyOrDx, 0);
         }
         //偏移回调
         onMovingAndStateCallback();

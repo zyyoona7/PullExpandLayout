@@ -21,7 +21,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         app:pel_dragType="fixed_foreground"
-        app:pel_headerMaxDragDistanceRate="1.3">
+        app:pel_headerMaxDragDistanceRate="1.1">
 
         <FrameLayout
             android:layout_width="match_parent"

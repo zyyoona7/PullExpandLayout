@@ -35,6 +35,7 @@ public class VerticalActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         final PullExpandLayout expandLayout = findViewById(R.id.pull_expand_layout);
+        expandLayout.setDebug(true);
         expandLayout.setPullExpandTransformer(
                 new ParallaxGamePullExpandTransformer(ConvertUtils.dp2px(50f),
                         ConvertUtils.dp2px(130f)));
