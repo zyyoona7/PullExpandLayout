@@ -1,12 +1,16 @@
-package com.zyyoona7.pullexpand;
+package com.zyyoona7.pullexpandlayout;
 
 import android.content.Context;
-import android.support.v4.widget.ListViewCompat;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 import android.widget.ListView;
 import android.widget.Scroller;
+
+import androidx.core.view.ViewCompat;
+import androidx.core.widget.ListViewCompat;
+
+import com.zyyoona7.pullexpandx.HeaderFooterLayout;
 
 public class PullExpandLayout2 extends HeaderFooterLayout {
 
@@ -162,7 +166,7 @@ public class PullExpandLayout2 extends HeaderFooterLayout {
                 mIsFooterExpanded = false;
             }
         }
-        postInvalidateOnAnimation();
+        ViewCompat.postInvalidateOnAnimation(this);
     }
 
     @Override
@@ -170,7 +174,7 @@ public class PullExpandLayout2 extends HeaderFooterLayout {
         super.computeScroll();
         if (mScroller.computeScrollOffset()) {
             scrollTo(0, mScroller.getCurrY());
-            postInvalidateOnAnimation();
+            ViewCompat.postInvalidateOnAnimation(this);
         }
 
         if (!mIsFingerTouched && mScroller.isFinished()) {

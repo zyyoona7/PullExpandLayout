@@ -1,5 +1,5 @@
 apply plugin: 'com.android.library'
-
+apply plugin: 'com.novoda.bintray-release'
 android {
     compileSdkVersion 28
 
@@ -7,7 +7,7 @@ android {
         minSdkVersion 15
         targetSdkVersion 28
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
 
         consumerProguardFiles 'consumer-rules.pro'
     }
@@ -22,7 +22,16 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    testImplementation 'junit:junit:4.12'
+    compileOnly fileTree(dir: 'libs', include: ['*.jar'])
+    compileOnly 'com.android.support:appcompat-v7:28.0.0'
+    testCompileOnly 'junit:junit:4.12'
+}
+
+publish {
+    userOrg = 'zyyoona7'
+    groupId = 'com.github.zyyoona7'
+    artifactId = 'pullexpandlayout'
+    publishVersion = '1.0.0'
+    desc = 'a pull left/right/down/up expandable layout like RefreshLayout'
+    website = 'https://github.com/zyyoona7/PullExpandLayout'
 }

@@ -1,27 +1,28 @@
-package com.zyyoona7.pullexpandlayout;
+package com.zyyoona7.appsupport.adapter;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
+import com.zyyoona7.appsupport.R;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainAdapter extends BaseQuickAdapter<String, BaseViewHolder> {
+public class HorizontalAdapter extends BaseQuickAdapter<String, BaseViewHolder> {
 
-    public static MainAdapter newInstance(int itemCount) {
+    public static HorizontalAdapter newInstance(int itemCount) {
         List<String> list = new ArrayList<>(1);
         for (int i = 0; i < itemCount; i++) {
-            list.add("哈哈哈 我是 item " + i);
+            list.add("item " + i);
         }
-        return new MainAdapter(list);
+        return new HorizontalAdapter(list);
     }
 
-    public MainAdapter() {
+    public HorizontalAdapter() {
         this(null);
     }
 
-    public MainAdapter(List<String> list) {
-        super(R.layout.item_main, list);
+    public HorizontalAdapter(List<String> list) {
+        super(R.layout.item_main2, list);
     }
 
     @Override

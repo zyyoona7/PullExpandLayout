@@ -1,25 +1,31 @@
-package com.zyyoona7.pullexpandlayout;
+package com.zyyoona7.appsupport.activity;
 
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import com.blankj.utilcode.util.ConvertUtils;
+import com.zyyoona7.appsupport.R;
+import com.zyyoona7.appsupport.adapter.VerticalAdapter;
+import com.zyyoona7.appsupport.transformer.ParallaxGamePullExpandTransformer;
+import com.zyyoona7.pullexpand.PullExpandLayout;
+import com.zyyoona7.pullexpand.listener.SimpleOnPullExpandChangedListener;
+import com.zyyoona7.pullexpand.listener.SimpleOnPullExpandStateListener;
 
-import com.zyyoona7.pullexpandx.PullExpandLayout;
-import com.zyyoona7.pullexpandx.listener.SimpleOnPullExpandChangedListener;
-import com.zyyoona7.pullexpandx.listener.SimpleOnPullExpandStateListener;
+public class VerticalActivity extends AppCompatActivity {
 
-public class MainActivity extends AppCompatActivity {
-
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "VerticalActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +33,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         PullExpandLayout expandLayout = findViewById(R.id.pull_expand_layout);
+        expandLayout.setPullExpandTransformer(
+                new ParallaxGamePullExpandTransformer(ConvertUtils.dp2px(50f),
+                        ConvertUtils.dp2px(130f)));
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
         final TextView header1 = findViewById(R.id.tv_header_1);
         final TextView header2 = findViewById(R.id.tv_header_2);
@@ -45,7 +54,11 @@ public class MainActivity extends AppCompatActivity {
         dividerDrawable.setBounds(0, 0, 0, 5);
         dividerItemDecoration.setDrawable(dividerDrawable);
         recyclerView.addItemDecoration(dividerItemDecoration);
-        recyclerView.setAdapter(MainAdapter.newInstance(30));
+        VerticalAdapter adapter = VerticalAdapter.newInstance(20);
+
+        createHeaderAndFooter(adapter);
+
+        recyclerView.setAdapter(adapter);
         expandLayout.addOnPullExpandChangedListener(new SimpleOnPullExpandChangedListener() {
 
             @Override
@@ -72,5 +85,23 @@ public class MainActivity extends AppCompatActivity {
         expandLayout.addOnPullExpandStateListener(new SimpleOnPullExpandStateListener() {
 
         });
+    }
+
+    private void createHeaderAndFooter(VerticalAdapter adapter) {
+        TextView textView = new TextView(this);
+        TextView footerTv = new TextView(this);
+        textView.setText("我是顶部");
+        footerTv.setText("我是底部");
+        textView.setGravity(Gravity.CENTER);
+        footerTv.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams layoutParams =
+                new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ConvertUtils.dp2px(50f));
+        layoutParams.gravity = Gravity.CENTER;
+        textView.setLayoutParams(layoutParams);
+        footerTv.setLayoutParams(layoutParams);
+        textView.setBackgroundColor(Color.CYAN);
+        footerTv.setBackgroundColor(Color.BLUE);
+        adapter.setHeaderView(textView);
+        adapter.setFooterView(footerTv);
     }
 }

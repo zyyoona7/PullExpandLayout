@@ -1,2 +1,2 @@
-include ':app', ':pullexpand', ':pullexpandx'
+include ':app', ':pullexpand', ':pullexpandx', ':appSupport'
 rootProject.name='PullExpandLayout'

@@ -6,7 +6,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
-    <com.zyyoona7.pullexpandx.PullExpandLayout
+    <com.zyyoona7.pullexpand.PullExpandLayout
         android:id="@+id/pull_expand_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -38,7 +38,7 @@
                 android:visibility="gone" />
         </FrameLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
+        <android.support.v7.widget.RecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -56,5 +56,5 @@
                 android:text="FOOTER"
                 android:textSize="26sp" />
         </FrameLayout>
-    </com.zyyoona7.pullexpandx.PullExpandLayout>
+    </com.zyyoona7.pullexpand.PullExpandLayout>
 </LinearLayout>

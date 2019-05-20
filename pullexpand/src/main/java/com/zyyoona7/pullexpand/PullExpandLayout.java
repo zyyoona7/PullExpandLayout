@@ -1,6 +1,5 @@
 package com.zyyoona7.pullexpand;
 
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -18,6 +17,8 @@ import android.widget.Scroller;
 
 import com.zyyoona7.pullexpand.listener.OnPullExpandChangedListener;
 import com.zyyoona7.pullexpand.listener.OnPullExpandStateListener;
+import com.zyyoona7.pullexpand.transformer.DefaultPullExpandTransformer;
+import com.zyyoona7.pullexpand.transformer.PullExpandTransformer;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -36,8 +37,6 @@ import java.util.List;
 public class PullExpandLayout extends HeaderFooterLayout {
 
     private static final String TAG = "PullExpandLayout";
-
-    // TODO: 2019-05-17 仿微信游戏视觉差效果，横向拖拽，已经展开二次下拉关闭（类似微信视频动态）
 
     //阻尼效果比率 0-1之间，越大越顺畅
     private static final float DEFAULT_DRAG_RATE = 0.4f;
@@ -141,6 +140,9 @@ public class PullExpandLayout extends HeaderFooterLayout {
     private int mCurrentHeaderState = STATE_COLLAPSED;
     //当前Footer的状态
     private int mCurrentFooterState = STATE_COLLAPSED;
+
+    //PullExpandLayout 转换器
+    private PullExpandTransformer mPullExpandTransformer;
 
     public PullExpandLayout(Context context) {
         this(context, null);
@@ -262,12 +264,12 @@ public class PullExpandLayout extends HeaderFooterLayout {
      * @return Header 或者 Footer 的拖拽临界值
      */
     private int getDragThreshold(int height, int width, int dragThreshold, float rate) {
-        int defaultThreshold = mOrientation == VERTICAL ? height / 3 : width / 3;
+        int defaultThreshold = isVertical() ? height / 3 : width / 3;
         if (dragThreshold == 0 && rate == 0f) {
             return defaultThreshold;
         }
         if (rate > 0f) {
-            return (int) (mOrientation == VERTICAL ? height * rate : width * rate);
+            return (int) (isVertical() ? height * rate : width * rate);
         }
         if (dragThreshold > 0) {
             return dragThreshold;
@@ -285,16 +287,16 @@ public class PullExpandLayout extends HeaderFooterLayout {
      * @return
      */
     private int getMaxDragDistance(int height, int width, int maxDragDistance, float rate) {
-        int defaultMaxDragDistance = mOrientation == VERTICAL ? height : width;
+        int defaultMaxDragDistance = isVertical() ? height : width;
         if (maxDragDistance == 0 && rate == 0) {
             return defaultMaxDragDistance;
         }
 
         if (rate > 0f) {
-            return (int) (mOrientation == VERTICAL ? height * rate : width * rate);
+            return (int) (isVertical() ? height * rate : width * rate);
         }
         if (maxDragDistance > 0
-                && (mOrientation == VERTICAL ? maxDragDistance > height : maxDragDistance > width)) {
+                && (isVertical() ? maxDragDistance > height : maxDragDistance > width)) {
             return maxDragDistance;
         }
 
@@ -320,7 +322,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
         }
 
         //初始化结束后执行一次状态变化
-        onMovingYAndStateCallback(false);
+        onMovingAndStateCallback(false);
 
         if (DEBUG) {
             Log.d(TAG, "onLayout: execute...");
@@ -335,7 +337,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
         }
         //当前View的尺寸发生改变时同步一下状态
         if ((oldw != 0 && w != oldw) || (oldh != 0 && h != oldh)) {
-            computeScrollYToState(true);
+            computeScrollToState(true);
         }
     }
 
@@ -357,8 +359,8 @@ public class PullExpandLayout extends HeaderFooterLayout {
                                          int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
         if (mCurrentHeaderState == STATE_EXPANDED) {
             //当Header展开时并且Header尺寸发生变化，需要同步一下状态，否则会卡住
-            if (mOrientation == VERTICAL) {
-                openHeaderVertical(true);
+            if (isVertical()) {
+                openHeader(true);
             }
         }
         if (DEBUG) {
@@ -384,9 +386,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
                                          int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
         if (mCurrentFooterState == STATE_EXPANDED) {
             //当Footer展开时并且Footer尺寸发生变化，需要同步一下状态，否则会卡住
-            if (mOrientation == VERTICAL) {
-                openFooterVertical(true);
-            }
+            openFooter(true);
         }
         if (DEBUG) {
             Log.d(TAG, "onHeaderLayoutChanged: execute...");
@@ -524,37 +524,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
                 break;
             case MotionEvent.ACTION_MOVE:
                 mVelocityTracker.addMovement(event);
-                if (mIsNeedSelfMove) {
-                    if (mLastScrollY * (mLastScrollY - mDeltaY) >= 0) {
-                        doScrollY();
-                        if (DEBUG) {
-                            Log.d(TAG, "onTouchEvent doScrollY dy.." + mDeltaY + ",scrollY.." + getScrollY());
-                        }
-                    } else {
-                        doFastScrollY();
-                        MotionEvent ev2 = MotionEvent.obtain(event);
-                        ev2.setAction(MotionEvent.ACTION_DOWN);
-                        super.dispatchTouchEvent(ev2);
-                        mIsInSelfControl = false;
-                        if (DEBUG) {
-                            Log.d(TAG, "onTouchEvent release scroll.." + mDeltaY);
-                        }
-                    }
-                    mLastScrollY = getScrollY();
-                    mLastScrollX = getScrollX();
-                } else {
-                    //手指在产生移动的时候（dy!=0）才重置位置
-                    if (mDeltaY != 0 && isFlowY()) {
-                        computeScrollYToState(false);
-                        mIsInSelfControl = false;
-                        //把滚动事件交给内部控件处理
-                        event.setAction(MotionEvent.ACTION_DOWN);
-                        super.dispatchTouchEvent(event);
-                        if (DEBUG) {
-                            Log.d(TAG, "onTouchEvent else ..");
-                        }
-                    }
-                }
+                onActionMove(event);
                 break;
             case MotionEvent.ACTION_UP:
                 mVelocityTracker.addMovement(event);
@@ -568,7 +538,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
                 if (DEBUG) {
                     Log.d(TAG, "onTouchEvent ACTION_UP.." + getScrollY());
                 }
-                computeScrollYToState(true);
+                computeScrollToState(true);
                 callReleaseChangedListeners();
                 mVelocityTracker.clear();//清空速度追踪器
                 break;
@@ -577,6 +547,17 @@ public class PullExpandLayout extends HeaderFooterLayout {
                 break;
         }
         return true;
+    }
+
+    /**
+     * 分发 ACTION_DOWN 事件
+     *
+     * @param event
+     */
+    private void dispatchSuperActionDown(MotionEvent event) {
+        MotionEvent ev2 = MotionEvent.obtain(event);
+        ev2.setAction(MotionEvent.ACTION_DOWN);
+        super.dispatchTouchEvent(ev2);
     }
 
     /**
@@ -659,7 +640,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
         if (mOrientation != HORIZONTAL) {
             return false;
         }
-        //水平布局 竖直拖拽距离大于大于距离则不拦截
+        //水平布局 竖直拖拽距离大于水平距离则不拦截
         if (Math.abs(mDeltaX) <= Math.abs(mDeltaY)) {
             return false;
         }
@@ -682,7 +663,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
             if (moveRight) {
                 if (isLeft && mDeltaX > 0 || getScrollX() < -20) {
                     if (DEBUG) {
-                        Log.d(TAG, "isNeedSelfMove moveDown Header");
+                        Log.d(TAG, "isNeedSelfMove moveRight Header");
                     }
                     return true;
                 }
@@ -699,7 +680,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
         }
         if (mFooterView != null) {
             if (moveLeft) {
-                if (isRight && mDeltaX < 0 || getScaleX() > 20) {
+                if (isRight && mDeltaX < 0 || getScrollX() > 20) {
                     if (DEBUG) {
                         Log.d(TAG, "isNeedSelfMove moveLeft Footer");
                     }
@@ -708,7 +689,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
             }
             if (moveRight) {
                 //右滑的时候 Footer 有可能展开了也有可能没展开
-                if (getScaleX() > 20 && isRight) {
+                if (getScrollX() > 20 && isRight) {
                     if (DEBUG) {
                         Log.d(TAG, "isNeedSelfMove moveRight Footer");
                     }
@@ -765,106 +746,216 @@ public class PullExpandLayout extends HeaderFooterLayout {
     }
 
     /**
-     * 执行垂直滚动
+     * 判断当前滚动位置是否已经进入可折叠范围了
+     *
+     * @return
      */
-    private void doScrollY() {
+    private boolean isFlowX() {
+        return getScrollX() > -30 && getScrollX() < 30;
+    }
+
+    /**
+     * 手指滑动的时候执行
+     *
+     * @param event MotionEvent
+     */
+    private void onActionMove(MotionEvent event) {
+        if (mIsNeedSelfMove) {
+            doScrollOrFastScroll(event);
+            mLastScrollY = getScrollY();
+            mLastScrollX = getScrollX();
+        } else {
+            boolean isResetState = isVertical() ? mDeltaY != 0 && isFlowY()
+                    : mDeltaX != 0 && isFlowX();
+            //手指在产生移动的时候（dy!=0 || dx!=0）才重置位置
+            if (isResetState) {
+                computeScrollToState(false);
+                mIsInSelfControl = false;
+                //把滚动事件交给内部控件处理
+                dispatchSuperActionDown(event);
+            }
+        }
+    }
+
+    /**
+     * 执行滚动或者快速滚动
+     *
+     * @param event MotionEvent
+     */
+    private void doScrollOrFastScroll(MotionEvent event) {
+        //如果这一次的滚动相较与上一次的滚动做乘法正负符号发生变化则表示滚动太快 视作快速滚动
+        boolean isNotFastScroll = isVertical() ? mLastScrollY * (mLastScrollY - mDeltaY) >= 0
+                : mLastScrollX * (mLastScrollX - mDeltaX) >= 0;
+        if (isNotFastScroll) {
+            doScroll();
+            if (DEBUG) {
+                Log.d(TAG, "doScrollOrFastScroll dy or dx.." + (isVertical() ? mDeltaY : mDeltaX)
+                        + ",scrollYOrX.." + (isVertical() ? getScrollY() : getScrollX()));
+            }
+        } else {
+            doFastScroll();
+            dispatchSuperActionDown(event);
+            mIsInSelfControl = false;
+            if (DEBUG) {
+                Log.d(TAG, "doScrollOrFastScroll release scroll.." + (isVertical() ? mDeltaY : mDeltaX));
+            }
+        }
+    }
+
+    /**
+     * 执行滚动
+     */
+    private void doScroll() {
         if (!mScroller.isFinished()) {
             mScroller.forceFinished(true);
         }
         //根据下拉高度计算位移距离，（越拉越慢）
-        int moveDy;
-        if (mDeltaY > 0) {
+        int moveDyOrDx;
+        float deltaYOrX = isVertical() ? mDeltaY : mDeltaX;
+        int scrollYOrX = isVertical() ? getScrollY() : getScrollX();
+        if (deltaYOrX > 0) {
             //下滑操作
-            if (getScrollY() <= 0) {
+            if (scrollYOrX <= 0) {
                 //当前需要显示Header
-                moveDy = (int) ((mHeaderMaxDragDistance + getScrollY()) * 1.0f
-                        / (mHeaderMaxDragDistance == 0 ? 1f : mHeaderMaxDragDistance) * mDeltaY * mDragRate);
+                moveDyOrDx = (int) ((mHeaderMaxDragDistance + scrollYOrX) * 1.0f
+                        / (mHeaderMaxDragDistance == 0 ? 1f : mHeaderMaxDragDistance) * deltaYOrX * mDragRate);
                 if (DEBUG) {
-                    Log.d(TAG, "doScrollY: 下滑操作，需要显示Header");
+                    Log.d(TAG, "doScroll: 下/右滑操作，需要显示Header");
                 }
             } else {
                 //当前需要隐藏Footer
-                moveDy = (int) ((mFooterMaxDragDistance + getScrollY()) * 1.0f
-                        / (mFooterMaxDragDistance == 0 ? 1f : mFooterMaxDragDistance) * mDeltaY * mDragRate);
+                moveDyOrDx = (int) ((mFooterMaxDragDistance + scrollYOrX) * 1.0f
+                        / (mFooterMaxDragDistance == 0 ? 1f : mFooterMaxDragDistance) * deltaYOrX * mDragRate);
                 if (DEBUG) {
-                    Log.d(TAG, "doScrollY: 下滑操作，需要隐藏Footer");
+                    Log.d(TAG, "doScroll: 下/右滑操作，需要隐藏Footer");
                 }
             }
         } else {
             //上滑操作
-            if (getScrollY() >= 0) {
+            if (scrollYOrX >= 0) {
                 //当前需要显示Footer
-                moveDy = (int) ((mFooterMaxDragDistance - getScrollY()) * 1.0f
-                        / (mFooterMaxDragDistance == 0 ? 1f : mFooterMaxDragDistance) * mDeltaY * mDragRate);
+                moveDyOrDx = (int) ((mFooterMaxDragDistance - scrollYOrX) * 1.0f
+                        / (mFooterMaxDragDistance == 0 ? 1f : mFooterMaxDragDistance) * deltaYOrX * mDragRate);
                 if (DEBUG) {
-                    Log.d(TAG, "doScrollY: 上滑操作，需要显示Footer");
+                    Log.d(TAG, "doScroll: 上/左滑操作，需要显示Footer");
                 }
             } else {
                 //当前需要隐藏Header
-                moveDy = (int) ((mHeaderMaxDragDistance - getScrollY()) * 1.0f
-                        / (mHeaderMaxDragDistance == 0 ? 1f : mHeaderMaxDragDistance) * mDeltaY * mDragRate);
+                moveDyOrDx = (int) ((mHeaderMaxDragDistance - scrollYOrX) * 1.0f
+                        / (mHeaderMaxDragDistance == 0 ? 1f : mHeaderMaxDragDistance) * deltaYOrX * mDragRate);
                 if (DEBUG) {
-                    Log.d(TAG, "doScrollY: 上滑操作，需要隐藏Header");
+                    Log.d(TAG, "doScroll: 上/左滑操作，需要隐藏Header");
                 }
             }
         }
         if (DEBUG) {
-            Log.d(TAG, "doScrollY -moveDy:" + (-moveDy));
+            Log.d(TAG, "doScroll -moveDyOrDx:" + (-moveDyOrDx));
         }
-        scrollBy(0, -moveDy);
+        if (isVertical()) {
+            scrollBy(0, -moveDyOrDx);
+        } else {
+            scrollBy(-moveDyOrDx, 0);
+        }
         //偏移回调
-        onMovingYAndStateCallback();
-        doOnScrollAndDragVertical();
+        onMovingAndStateCallback();
+        doOnScrollAndDrag();
     }
 
     /**
-     * 执行快速垂直滚动
+     * 执行快速滚动
      */
-    private void doFastScrollY() {
-        boolean isHeaderShow = mLastScrollY < 0;
-        boolean isFooterShow = mLastScrollY > 0;
+    private void doFastScroll() {
+        boolean isHeaderShow = isVertical() ? mLastScrollY < 0 : mLastScrollX < 0;
+        boolean isFooterShow = isVertical() ? mLastScrollY > 0 : mLastScrollX > 0;
 
-        if (isHeaderShow && mLastScrollY - mDeltaY > 0) {
-            //正在快速上滑，需要关闭header
+        if (isHeaderShow
+                && (isVertical() ? mLastScrollY - mDeltaY > 0 : mLastScrollX - mDeltaX > 0)) {
+            //正在快速上/右滑，需要关闭header
             //在scrollTo 0 之前执行，为了防止快速滑动有可能会闪动一下，尤其是有背景的时候
-            doOnScrollAndDragVertical(0);
+            doOnScrollAndDrag(0);
             scrollTo(0, 0);
             return;
         }
-        if (isFooterShow && mLastScrollY - mDeltaY < 0) {
-            //正在快速上滑，需要关闭footer
+        if (isFooterShow
+                && (isVertical() ? mLastScrollY - mDeltaY < 0 : mLastScrollX - mDeltaX < 0)) {
+            //正在快速上/左滑，需要关闭footer
             //在scrollTo 0 之前执行，为了防止快速滑动有可能会闪动一下，尤其是有背景的时候
-            doOnScrollAndDragVertical(0);
+            doOnScrollAndDrag(0);
             scrollTo(0, 0);
         }
         //偏移回调
-        onMovingYAndStateCallback();
+        onMovingAndStateCallback();
     }
 
     /**
      * 根据拖拽类型子滚动和拖拽的时候更新 Header Footer 状态
      */
-    private void doOnScrollAndDragVertical() {
-        doOnScrollAndDragVertical(getScrollY());
+    private void doOnScrollAndDrag() {
+        doOnScrollAndDrag(isVertical() ? getScrollY() : getScrollX());
     }
 
     /**
      * 根据拖拽类型子滚动和拖拽的时候更新 Header Footer 状态
      *
-     * @param scrollY scrollY
+     * @param scrollYOrX scrollY or scrollX
      */
-    private void doOnScrollAndDragVertical(int scrollY) {
+    private void doOnScrollAndDrag(int scrollYOrX) {
+        if (mPullExpandTransformer == null) {
+            mPullExpandTransformer = new DefaultPullExpandTransformer();
+        }
         if (mDragType == DRAG_TYPE_FIXED_BEHIND) {
-            if (mHeaderView != null && getScrollY() <= 0) {
-                mHeaderView.setTranslationY(mHeaderHeight + scrollY);
-            }
-            if (mFooterView != null && getScrollY() >= 0) {
-                mFooterView.setTranslationY(-mFooterHeight + scrollY);
-            }
+            transformForFixedBehind(mOrientation, scrollYOrX);
         } else if (mDragType == DRAG_TYPE_FIXED_FOREGROUND) {
-            if (mContentView != null) {
-                mContentView.setTranslationY(scrollY);
-            }
+            transformNormal(mOrientation, DRAG_TYPE_FIXED_FOREGROUND, scrollYOrX);
+        } else {
+            transformNormal(mOrientation, DRAG_TYPE_TRANSLATE, scrollYOrX);
+        }
+    }
+
+    /**
+     * dragType==DRAG_TYPE_FIXED_BEHIND 变换回调
+     *
+     * @param orientation 布局方向
+     * @param scrollYOrX  scrollY or scrollX
+     */
+    private void transformForFixedBehind(int orientation, int scrollYOrX) {
+        boolean isVertical = isVertical();
+        boolean isCallTransformHeader = isVertical ? getScrollY() <= 0 : getScrollX() <= 0;
+        boolean isCallTransformFooter = isVertical ? getScrollY() >= 0 : getScrollX() >= 0;
+        if (mHeaderView != null && isCallTransformHeader) {
+            mPullExpandTransformer.transformHeader(this, orientation, DRAG_TYPE_FIXED_BEHIND, mHeaderView,
+                    isVertical ? mHeaderHeight : mHeaderWidth, scrollYOrX);
+        }
+        if (mFooterView != null && isCallTransformFooter) {
+            mPullExpandTransformer.transformFooter(this, orientation, DRAG_TYPE_FIXED_BEHIND, mFooterView,
+                    isVertical ? mFooterHeight : mFooterWidth, scrollYOrX);
+        }
+        if (mContentView != null) {
+            mPullExpandTransformer.transformContent(this, orientation, DRAG_TYPE_FIXED_BEHIND, mContentView,
+                    isVertical ? getHeight() : getWidth(), scrollYOrX);
+        }
+    }
+
+    /**
+     * 普通的变换回调
+     *
+     * @param orientation 布局方向
+     * @param dragType    拖拽类型
+     * @param scrollYOrX  scrollY or scrollX
+     */
+    private void transformNormal(int orientation, int dragType, int scrollYOrX) {
+        boolean isVertical = isVertical();
+        if (mHeaderView != null) {
+            mPullExpandTransformer.transformHeader(this, orientation, dragType, mHeaderView,
+                    isVertical ? mHeaderHeight : mHeaderWidth, scrollYOrX);
+        }
+        if (mFooterView != null) {
+            mPullExpandTransformer.transformFooter(this, orientation, dragType, mFooterView,
+                    isVertical ? mFooterHeight : mFooterWidth, scrollYOrX);
+        }
+        if (mContentView != null) {
+            mPullExpandTransformer.transformContent(this, orientation, dragType, mContentView,
+                    isVertical ? getHeight() : getWidth(), scrollYOrX);
         }
     }
 
@@ -873,9 +964,13 @@ public class PullExpandLayout extends HeaderFooterLayout {
         super.computeScroll();
         if (mScroller.computeScrollOffset()) {
             mIsComputeScrollCanCheckState = true;
-            scrollTo(0, mScroller.getCurrY());
-            onMovingYAndStateCallback();
-            doOnScrollAndDragVertical();
+            if (isVertical()) {
+                scrollTo(0, mScroller.getCurrY());
+            } else {
+                scrollTo(mScroller.getCurrX(), 0);
+            }
+            onMovingAndStateCallback();
+            doOnScrollAndDrag();
             mLastScrollY = getScrollY();
             mLastScrollX = getScrollX();
             ViewCompat.postInvalidateOnAnimation(this);
@@ -883,7 +978,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
 
         if (mIsComputeScrollCanCheckState && !mIsFingerTouched
                 && mScroller.isFinished()) {
-            checkVerticalHeaderFooterState();
+            checkFinalHeaderFooterState();
             if (DEBUG) {
                 Log.d(TAG, "computeScroll check state finish.header:"
                         + mIsHeaderExpanded + ",footer:" + mIsFooterExpanded);
@@ -893,51 +988,56 @@ public class PullExpandLayout extends HeaderFooterLayout {
     }
 
     /**
-     * 通过计算scrollY来判断滚动到最终态
+     * 通过计算 scrollY or scrollX 来判断滚动到最终态
      *
      * @param isAnimateScroll 是否动画滚动
      */
-    private void computeScrollYToState(boolean isAnimateScroll) {
+    private void computeScrollToState(boolean isAnimateScroll) {
         mIsInSelfControl = false;
+        boolean isVertical = isVertical();
+        int scrollYOrX = isVertical ? getScrollY() : getScrollX();
+        int headerHeightOrWidth = isVertical ? mHeaderHeight : mHeaderWidth;
+        int footerHeightOrWidth = isVertical ? mFooterHeight : mFooterWidth;
         //header完全展开了，并且向上推的高度>mHeaderShownThreshold 表示关闭
-        if (mIsHeaderExpanded && getScrollY() < 0
-                && mHeaderHeight + getScrollY() > mHeaderDragThreshold
-                && Math.abs(getScrollY()) < mHeaderHeight
+        if (mIsHeaderExpanded && scrollYOrX < 0
+                && headerHeightOrWidth + scrollYOrX > mHeaderDragThreshold
+                && Math.abs(scrollYOrX) < headerHeightOrWidth
                 && mCurrentHeaderState == STATE_COLLAPSING) {
-            closeHeaderOrFooterVertical(isAnimateScroll);
+            closeHeaderOrFooter(isAnimateScroll);
             return;
         }
         //footer完全展开了，并且向下推的高度>mFooterShownThreshold 表示关闭
-        if (mIsFooterExpanded && getScrollY() > 0
-                && mFooterHeight - getScrollY() > mFooterDragThreshold
-                && getScrollY() < mFooterHeight
+        if (mIsFooterExpanded && scrollYOrX > 0
+                && footerHeightOrWidth - scrollYOrX > mFooterDragThreshold
+                && scrollYOrX < footerHeightOrWidth
                 && mCurrentFooterState == STATE_COLLAPSING) {
-            closeHeaderOrFooterVertical(isAnimateScroll);
+            closeHeaderOrFooter(isAnimateScroll);
             return;
         }
 
-        if (-getScrollY() > mHeaderDragThreshold) {
-            openHeaderVertical(isAnimateScroll);
-        } else if (getScrollY() > mFooterDragThreshold) {
-            openFooterVertical(isAnimateScroll);
+        if (-scrollYOrX > mHeaderDragThreshold) {
+            openHeader(isAnimateScroll);
+        } else if (scrollYOrX > mFooterDragThreshold) {
+            openFooter(isAnimateScroll);
         } else {
-            closeHeaderOrFooterVertical(isAnimateScroll);
+            closeHeaderOrFooter(isAnimateScroll);
         }
     }
 
     /**
-     * 检查垂直方向当前Header Footer的状态
+     * 检查当前Header Footer的状态
      */
-    private void checkVerticalHeaderFooterState() {
+    private void checkFinalHeaderFooterState() {
         //停止滚动确定一下状态
         int lastHeaderState = mCurrentHeaderState;
         int lastFooterState = mCurrentFooterState;
-        if (getScrollY() > 0) {
+        int scrollYOrX = isVertical() ? getScrollY() : getScrollX();
+        if (scrollYOrX > 0) {
             mIsHeaderExpanded = false;
             mIsFooterExpanded = true;
             mCurrentHeaderState = STATE_COLLAPSED;
             mCurrentFooterState = STATE_EXPANDED;
-        } else if (getScrollY() < 0) {
+        } else if (scrollYOrX < 0) {
             mIsHeaderExpanded = true;
             mIsFooterExpanded = false;
             mCurrentHeaderState = STATE_EXPANDED;
@@ -949,7 +1049,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
             mCurrentFooterState = STATE_COLLAPSED;
         }
 
-        callHeaderAndFooterChangedListenersVertical(false, -1);
+        callHeaderAndFooterChangedListeners(false, -1);
 
         callHeaderAndFooterStateListeners(lastHeaderState, lastFooterState);
     }
@@ -959,8 +1059,12 @@ public class PullExpandLayout extends HeaderFooterLayout {
      *
      * @param isAnimateScroll 是否动画滚动
      */
-    private void openHeaderVertical(boolean isAnimateScroll) {
-        startScrollY(getScrollY(), -(getScrollY() + mHeaderHeight), isAnimateScroll);
+    private void openHeader(boolean isAnimateScroll) {
+        if (isVertical()) {
+            startScrollY(getScrollY(), -(getScrollY() + mHeaderHeight), isAnimateScroll);
+        } else {
+            startScrollX(getScrollX(), -(getScrollX() + mHeaderWidth), isAnimateScroll);
+        }
     }
 
     /**
@@ -968,8 +1072,8 @@ public class PullExpandLayout extends HeaderFooterLayout {
      *
      * @param isAnimateScroll 是否动画滚动
      */
-    private void closeHeaderVertical(boolean isAnimateScroll) {
-        closeHeaderOrFooterVertical(isAnimateScroll);
+    private void closeHeader(boolean isAnimateScroll) {
+        closeHeaderOrFooter(isAnimateScroll);
     }
 
     /**
@@ -977,8 +1081,12 @@ public class PullExpandLayout extends HeaderFooterLayout {
      *
      * @param isAnimateScroll 是否动画滚动
      */
-    private void openFooterVertical(boolean isAnimateScroll) {
-        startScrollY(getScrollY(), mFooterHeight - getScrollY(), isAnimateScroll);
+    private void openFooter(boolean isAnimateScroll) {
+        if (isVertical()) {
+            startScrollY(getScrollY(), mFooterHeight - getScrollY(), isAnimateScroll);
+        } else {
+            startScrollX(getScrollX(), mFooterWidth - getScrollX(), isAnimateScroll);
+        }
     }
 
     /**
@@ -986,8 +1094,8 @@ public class PullExpandLayout extends HeaderFooterLayout {
      *
      * @param isAnimateScroll 是否动画滚动
      */
-    private void closeFooterVertical(boolean isAnimateScroll) {
-        closeHeaderOrFooterVertical(isAnimateScroll);
+    private void closeFooter(boolean isAnimateScroll) {
+        closeHeaderOrFooter(isAnimateScroll);
     }
 
     /**
@@ -995,8 +1103,12 @@ public class PullExpandLayout extends HeaderFooterLayout {
      *
      * @param isAnimateScroll 是否动画滚动
      */
-    private void closeHeaderOrFooterVertical(boolean isAnimateScroll) {
-        startScrollY(getScrollY(), -getScrollY(), isAnimateScroll);
+    private void closeHeaderOrFooter(boolean isAnimateScroll) {
+        if (isVertical()) {
+            startScrollY(getScrollY(), -getScrollY(), isAnimateScroll);
+        } else {
+            startScrollX(getScrollX(), -getScrollX(), isAnimateScroll);
+        }
     }
 
     /**
@@ -1015,22 +1127,39 @@ public class PullExpandLayout extends HeaderFooterLayout {
     }
 
     /**
-     * 垂直滑动时回调
+     * 通过Scroller滚动x方向
+     *
+     * @param startX          startX
+     * @param dx              delta x
+     * @param isAnimateScroll 是否执行动画滚动
      */
-    private void onMovingYAndStateCallback() {
-        onMovingYAndStateCallback(true);
+    private void startScrollX(int startX, int dx, boolean isAnimateScroll) {
+        if (!mScroller.isFinished()) {
+            mScroller.forceFinished(true);
+        }
+        mScroller.startScroll(startX, 0, dx, 0, isAnimateScroll ? 300 : 16);
+        ViewCompat.postInvalidateOnAnimation(this);
     }
 
     /**
-     * 垂直滑动时回调
+     * 滑动时回调
      */
-    private void onMovingYAndStateCallback(boolean isCallMoving) {
-        int scrollY = getScrollY();
-        int absScrollY = Math.abs(scrollY);
-        boolean isExpanding = absScrollY > Math.abs(mLastScrollY);
-        boolean isCollapsing = absScrollY < Math.abs(mLastScrollY);
+    private void onMovingAndStateCallback() {
+        onMovingAndStateCallback(true);
+    }
 
-        if (getScrollY() < 0) {
+    /**
+     * 滑动时回调
+     *
+     * @param isCallMoving 是否执行 xxMoving 回调
+     */
+    private void onMovingAndStateCallback(boolean isCallMoving) {
+        int scrollYOrX = isVertical() ? getScrollY() : getScrollX();
+        int absScrollY = Math.abs(scrollYOrX);
+        boolean isExpanding = absScrollY > Math.abs(isVertical() ? mLastScrollY : mLastScrollX);
+        boolean isCollapsing = absScrollY < Math.abs(isVertical() ? mLastScrollY : mLastScrollX);
+
+        if (scrollYOrX < 0) {
             //操作Header
             int lastHeaderState = mCurrentHeaderState;
             if (isExpanding) {
@@ -1038,9 +1167,9 @@ public class PullExpandLayout extends HeaderFooterLayout {
             } else if (isCollapsing) {
                 mCurrentHeaderState = STATE_COLLAPSING;
             }
-            callHeaderChangedListenersVertical(isCallMoving, absScrollY);
+            callHeaderChangedListeners(isCallMoving, absScrollY);
             callHeaderStateListeners(lastHeaderState);
-        } else if (getScrollY() > 0) {
+        } else if (scrollYOrX > 0) {
             //操作Footer
             int lastFooterState = mCurrentFooterState;
             if (isExpanding) {
@@ -1048,7 +1177,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
             } else if (isCollapsing) {
                 mCurrentFooterState = STATE_COLLAPSING;
             }
-            callFooterChangedListenersVertical(isCallMoving, absScrollY);
+            callFooterChangedListeners(isCallMoving, absScrollY);
             callFooterStateListeners(lastFooterState);
         } else {
             //还原 Header Footer 都收起了
@@ -1056,57 +1185,56 @@ public class PullExpandLayout extends HeaderFooterLayout {
             int lastFooterState = mCurrentFooterState;
             mCurrentHeaderState = STATE_COLLAPSED;
             mCurrentFooterState = STATE_COLLAPSED;
-            callHeaderAndFooterChangedListenersVertical(isCallMoving, scrollY);
+            callHeaderAndFooterChangedListeners(isCallMoving, scrollYOrX);
             callHeaderAndFooterStateListeners(lastHeaderState, lastFooterState);
         }
     }
 
     /**
-     * 执行垂直方向 Header 状态变化回调
+     * 执行 Header 状态变化回调
      *
-     * @param isCallMoving 是否回调 onHeaderMoving 方法
-     * @param absScrollY   scrollY 的绝对值
+     * @param isCallMoving  是否回调 onHeaderMoving 方法
+     * @param absScrollYOrX scrollY 的绝对值
      */
-    private void callHeaderChangedListenersVertical(boolean isCallMoving, int absScrollY) {
-        callHeaderAndFooterChangedListeners(isCallMoving, absScrollY, true, mHeaderHeight,
-                false, mFooterHeight);
+    private void callHeaderChangedListeners(boolean isCallMoving, int absScrollYOrX) {
+        callHeaderAndFooterChangedListeners(isCallMoving, absScrollYOrX, true,
+                false);
     }
 
     /**
-     * 执行垂直方向 Footer 状态变化回调
+     * 执行 Footer 状态变化回调
      *
-     * @param isCallMoving 是否回调 onFooterMoving 方法
-     * @param absScrollY   scroll 绝对值
+     * @param isCallMoving  是否回调 onFooterMoving 方法
+     * @param absScrollYOrX scroll 绝对值
      */
-    private void callFooterChangedListenersVertical(boolean isCallMoving, int absScrollY) {
-        callHeaderAndFooterChangedListeners(isCallMoving, absScrollY, false, mHeaderHeight,
-                true, mFooterHeight);
-    }
-
-    /**
-     * 执行垂直方向 Header Footer 状态变化回调
-     *
-     * @param isCallMoving 是否回调 onXxMoving 方法
-     * @param scrollY      scrollY
-     */
-    private void callHeaderAndFooterChangedListenersVertical(boolean isCallMoving, int scrollY) {
-        callHeaderAndFooterChangedListeners(isCallMoving, scrollY, true,
-                mHeaderHeight, true, mFooterHeight);
+    private void callFooterChangedListeners(boolean isCallMoving, int absScrollYOrX) {
+        callHeaderAndFooterChangedListeners(isCallMoving, absScrollYOrX, false,
+                true);
     }
 
     /**
      * 执行 Header Footer 状态变化回调
      *
-     * @param isCallMoving        是否回调 onXxMoving 方法
-     * @param scrollYOrX          scrollY or scrollX
-     * @param isCallHeader        是否回调 Header 方法
-     * @param headerHeightOrWidth orientation==VERTICAL headerHeight else headerWidth
-     * @param isCallFooter        是否回调 Footer 方法
-     * @param footerHeightOrWidth orientation==VERTICAL footerHeight else footerWidth
+     * @param isCallMoving 是否回调 onXxMoving 方法
+     * @param scrollYOrX   scrollY or scrollX
+     */
+    private void callHeaderAndFooterChangedListeners(boolean isCallMoving, int scrollYOrX) {
+        callHeaderAndFooterChangedListeners(isCallMoving, scrollYOrX, true,
+                true);
+    }
+
+    /**
+     * 执行 Header Footer 状态变化回调
+     *
+     * @param isCallMoving 是否回调 onXxMoving 方法
+     * @param scrollYOrX   scrollY or scrollX
+     * @param isCallHeader 是否回调 Header 方法
+     * @param isCallFooter 是否回调 Footer 方法
      */
     private void callHeaderAndFooterChangedListeners(boolean isCallMoving, int scrollYOrX,
-                                                     boolean isCallHeader, int headerHeightOrWidth,
-                                                     boolean isCallFooter, int footerHeightOrWidth) {
+                                                     boolean isCallHeader, boolean isCallFooter) {
+        int headerHeightOrWidth = isVertical() ? mHeaderHeight : mHeaderWidth;
+        int footerHeightOrWidth = isVertical() ? mFooterHeight : mFooterWidth;
         if (mOnPullExpandChangedListeners != null) {
             for (OnPullExpandChangedListener onPullExpandChangedListener : mOnPullExpandChangedListeners) {
                 if (isCallHeader && mHeaderView != null) {
@@ -1134,7 +1262,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
         if (mOnPullExpandChangedListeners != null) {
             for (OnPullExpandChangedListener onPullExpandChangedListener : mOnPullExpandChangedListeners) {
                 onPullExpandChangedListener.onReleased(this,
-                        mOrientation == VERTICAL ? getScrollY() : getScrollX());
+                        isVertical() ? getScrollY() : getScrollX());
             }
         }
     }
@@ -1189,6 +1317,10 @@ public class PullExpandLayout extends HeaderFooterLayout {
                 }
             }
         }
+    }
+
+    private boolean isVertical() {
+        return mOrientation == VERTICAL;
     }
 
     /**
@@ -1283,7 +1415,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
     public void setHeaderDragThresholdRate(@FloatRange(from = 0f, to = 1f) float headerDragThresholdRate) {
         mHeaderDragThresholdRate = getDragThresholdRateInRange(headerDragThresholdRate);
         if (mHeaderDragThresholdRate != 0) {
-            mHeaderDragThreshold = (int) (mOrientation == VERTICAL ? mHeaderHeight * mHeaderDragThresholdRate
+            mHeaderDragThreshold = (int) (isVertical() ? mHeaderHeight * mHeaderDragThresholdRate
                     : mHeaderWidth * mHeaderDragThresholdRate);
         }
     }
@@ -1307,7 +1439,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
     public void setFooterDragThresholdRate(@FloatRange(from = 0f, to = 1f) float footerDragThresholdRate) {
         mFooterDragThresholdRate = getDragThresholdRateInRange(footerDragThresholdRate);
         if (mFooterDragThresholdRate != 0) {
-            mFooterDragThreshold = (int) (mOrientation == VERTICAL ? mFooterHeight * mFooterDragThresholdRate
+            mFooterDragThreshold = (int) (isVertical() ? mFooterHeight * mFooterDragThresholdRate
                     : mFooterWidth * mFooterDragThresholdRate);
         }
     }
@@ -1368,6 +1500,15 @@ public class PullExpandLayout extends HeaderFooterLayout {
      */
     public void setFooterEnabled(boolean footerEnabled) {
         mIsFooterEnabled = footerEnabled;
+    }
+
+    /**
+     * 设置 PullExpandLayout 滑动时的转换器
+     *
+     * @param pullExpandTransformer transformer
+     */
+    public void setPullExpandTransformer(PullExpandTransformer pullExpandTransformer) {
+        mPullExpandTransformer = pullExpandTransformer;
     }
 
     /**
@@ -1473,13 +1614,9 @@ public class PullExpandLayout extends HeaderFooterLayout {
      */
     public void setHeaderExpanded(boolean isExpand, boolean isAnim) {
         if (isExpand) {
-            if (mOrientation == VERTICAL) {
-                openHeaderVertical(isAnim);
-            }
+            openHeader(isAnim);
         } else {
-            if (mOrientation == VERTICAL) {
-                closeFooterVertical(isAnim);
-            }
+            closeHeader(isAnim);
         }
     }
 
@@ -1500,13 +1637,9 @@ public class PullExpandLayout extends HeaderFooterLayout {
      */
     public void setFooterExpanded(boolean isExpand, boolean isAnim) {
         if (isExpand) {
-            if (mOrientation == VERTICAL) {
-                openFooterVertical(isAnim);
-            }
+            openFooter(isAnim);
         } else {
-            if (mOrientation == VERTICAL) {
-                closeFooterVertical(isAnim);
-            }
+            closeFooter(isAnim);
         }
     }
 
