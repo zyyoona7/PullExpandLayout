@@ -58,7 +58,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
     //已经收缩
     public static final int STATE_COLLAPSED = 3;
 
-    private boolean DEBUG = true;
+    private boolean mIsDebug = false;
 
     //头部高度
     private int mHeaderHeight;
@@ -245,7 +245,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
                     mFooterMaxDragDistance, mFooterMaxDragDistanceRate);
         }
 
-        if (DEBUG) {
+        if (mIsDebug) {
             Log.d(TAG, "onMeasure: header height:" + mHeaderHeight + ",header width:" + mHeaderWidth
                     + ",header max drag height" + mHeaderMaxDragDistance);
 
@@ -324,7 +324,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
         //初始化结束后执行一次状态变化
         onMovingAndStateCallback(false);
 
-        if (DEBUG) {
+        if (mIsDebug) {
             Log.d(TAG, "onLayout: execute...");
         }
     }
@@ -332,7 +332,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        if (DEBUG) {
+        if (mIsDebug) {
             Log.d(TAG, "onSizeChanged: execute...");
         }
         //当前View的尺寸发生改变时同步一下状态
@@ -363,7 +363,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
                 openHeader(true);
             }
         }
-        if (DEBUG) {
+        if (mIsDebug) {
             Log.d(TAG, "onHeaderLayoutChanged: execute...");
         }
     }
@@ -388,7 +388,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
             //当Footer展开时并且Footer尺寸发生变化，需要同步一下状态，否则会卡住
             openFooter(true);
         }
-        if (DEBUG) {
+        if (mIsDebug) {
             Log.d(TAG, "onHeaderLayoutChanged: execute...");
         }
     }
@@ -414,7 +414,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
                 mIsComputeScrollCanCheckState = true;
                 mLastScrollY = getScrollY();
                 mLastScrollX = getScrollX();
-                if (DEBUG) {
+                if (mIsDebug) {
                     Log.d(TAG, "dispatchTouchEvent ACTION_DOWN...");
                 }
                 break;
@@ -424,7 +424,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
                 mIsNeedSelfMove = isNeedSelfMoveVertical() || isNeedSelfMoveHorizontal();
                 //需要自身滚动，并且自身并没有在控制滚动
                 if (mIsNeedSelfMove && !mIsInSelfControl) {
-                    if (DEBUG) {
+                    if (mIsDebug) {
                         Log.d(TAG, "dispatchTouchEvent in self Control.");
                     }
                     //把内部控件的事件转发给本控件处理
@@ -535,7 +535,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
                 mDeltaX = 0;
                 mLastX = 0;
                 mLastY = 0;
-                if (DEBUG) {
+                if (mIsDebug) {
                     Log.d(TAG, "onTouchEvent ACTION_UP.." + getScrollY());
                 }
                 computeScrollToState(true);
@@ -592,7 +592,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
             //其中的20是一个防止触摸误差的偏移量
             if (moveDown) {
                 if (isTop && mDeltaY > 0 || getScrollY() < -20) {
-                    if (DEBUG) {
+                    if (mIsDebug) {
                         Log.d(TAG, "isNeedSelfMove moveDown Header");
                     }
                     return true;
@@ -601,7 +601,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
             if (moveUp) {
                 //上滑的时候 Header 有可能展开了也有可能没展开
                 if (getScrollY() < -20 && isTop) {
-                    if (DEBUG) {
+                    if (mIsDebug) {
                         Log.d(TAG, "isNeedSelfMove moveUp Header");
                     }
                     return true;
@@ -611,7 +611,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
         if (mFooterView != null) {
             if (moveUp) {
                 if (isBottom && mDeltaY < 0 || getScrollY() > 20) {
-                    if (DEBUG) {
+                    if (mIsDebug) {
                         Log.d(TAG, "isNeedSelfMove moveUp Footer");
                     }
                     return true;
@@ -620,7 +620,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
             if (moveDown) {
                 //下滑的时候 Footer 有可能展开了也有可能没展开
                 if (getScrollY() > 20 && isBottom) {
-                    if (DEBUG) {
+                    if (mIsDebug) {
                         Log.d(TAG, "isNeedSelfMove moveDown Footer");
                     }
                     return true;
@@ -662,7 +662,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
             //其中的20是一个防止触摸误差的偏移量
             if (moveRight) {
                 if (isLeft && mDeltaX > 0 || getScrollX() < -20) {
-                    if (DEBUG) {
+                    if (mIsDebug) {
                         Log.d(TAG, "isNeedSelfMove moveRight Header");
                     }
                     return true;
@@ -671,7 +671,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
             if (moveLeft) {
                 //上滑的时候 Header 有可能展开了也有可能没展开
                 if (getScrollX() < -20 && isLeft) {
-                    if (DEBUG) {
+                    if (mIsDebug) {
                         Log.d(TAG, "isNeedSelfMove moveLeft Header");
                     }
                     return true;
@@ -681,7 +681,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
         if (mFooterView != null) {
             if (moveLeft) {
                 if (isRight && mDeltaX < 0 || getScrollX() > 20) {
-                    if (DEBUG) {
+                    if (mIsDebug) {
                         Log.d(TAG, "isNeedSelfMove moveLeft Footer");
                     }
                     return true;
@@ -690,7 +690,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
             if (moveRight) {
                 //右滑的时候 Footer 有可能展开了也有可能没展开
                 if (getScrollX() > 20 && isRight) {
-                    if (DEBUG) {
+                    if (mIsDebug) {
                         Log.d(TAG, "isNeedSelfMove moveRight Footer");
                     }
                     return true;
@@ -788,7 +788,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
                 : mLastScrollX * (mLastScrollX - mDeltaX) >= 0;
         if (isNotFastScroll) {
             doScroll();
-            if (DEBUG) {
+            if (mIsDebug) {
                 Log.d(TAG, "doScrollOrFastScroll dy or dx.." + (isVertical() ? mDeltaY : mDeltaX)
                         + ",scrollYOrX.." + (isVertical() ? getScrollY() : getScrollX()));
             }
@@ -796,7 +796,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
             doFastScroll();
             dispatchSuperActionDown(event);
             mIsInSelfControl = false;
-            if (DEBUG) {
+            if (mIsDebug) {
                 Log.d(TAG, "doScrollOrFastScroll release scroll.." + (isVertical() ? mDeltaY : mDeltaX));
             }
         }
@@ -819,14 +819,14 @@ public class PullExpandLayout extends HeaderFooterLayout {
                 //当前需要显示Header
                 moveDyOrDx = (int) ((mHeaderMaxDragDistance + scrollYOrX) * 1.0f
                         / (mHeaderMaxDragDistance == 0 ? 1f : mHeaderMaxDragDistance) * deltaYOrX * mDragRate);
-                if (DEBUG) {
+                if (mIsDebug) {
                     Log.d(TAG, "doScroll: 下/右滑操作，需要显示Header");
                 }
             } else {
                 //当前需要隐藏Footer
                 moveDyOrDx = (int) ((mFooterMaxDragDistance + scrollYOrX) * 1.0f
                         / (mFooterMaxDragDistance == 0 ? 1f : mFooterMaxDragDistance) * deltaYOrX * mDragRate);
-                if (DEBUG) {
+                if (mIsDebug) {
                     Log.d(TAG, "doScroll: 下/右滑操作，需要隐藏Footer");
                 }
             }
@@ -836,19 +836,19 @@ public class PullExpandLayout extends HeaderFooterLayout {
                 //当前需要显示Footer
                 moveDyOrDx = (int) ((mFooterMaxDragDistance - scrollYOrX) * 1.0f
                         / (mFooterMaxDragDistance == 0 ? 1f : mFooterMaxDragDistance) * deltaYOrX * mDragRate);
-                if (DEBUG) {
+                if (mIsDebug) {
                     Log.d(TAG, "doScroll: 上/左滑操作，需要显示Footer");
                 }
             } else {
                 //当前需要隐藏Header
                 moveDyOrDx = (int) ((mHeaderMaxDragDistance - scrollYOrX) * 1.0f
                         / (mHeaderMaxDragDistance == 0 ? 1f : mHeaderMaxDragDistance) * deltaYOrX * mDragRate);
-                if (DEBUG) {
+                if (mIsDebug) {
                     Log.d(TAG, "doScroll: 上/左滑操作，需要隐藏Header");
                 }
             }
         }
-        if (DEBUG) {
+        if (mIsDebug) {
             Log.d(TAG, "doScroll -moveDyOrDx:" + (-moveDyOrDx));
         }
         if (isVertical()) {
@@ -979,7 +979,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
         if (mIsComputeScrollCanCheckState && !mIsFingerTouched
                 && mScroller.isFinished()) {
             checkFinalHeaderFooterState();
-            if (DEBUG) {
+            if (mIsDebug) {
                 Log.d(TAG, "computeScroll check state finish.header:"
                         + mIsHeaderExpanded + ",footer:" + mIsFooterExpanded);
             }
@@ -1595,6 +1595,15 @@ public class PullExpandLayout extends HeaderFooterLayout {
      */
     public int getCurrentFooterState() {
         return mCurrentFooterState;
+    }
+
+    /**
+     * 设置debug模式
+     *
+     * @param debug 是否开启debug日志打印
+     */
+    public void setDebug(boolean debug) {
+        mIsDebug = debug;
     }
 
     /**
