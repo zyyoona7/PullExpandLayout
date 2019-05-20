@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,11 +34,13 @@ public class VerticalActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        PullExpandLayout expandLayout = findViewById(R.id.pull_expand_layout);
+        final PullExpandLayout expandLayout = findViewById(R.id.pull_expand_layout);
         expandLayout.setPullExpandTransformer(
                 new ParallaxGamePullExpandTransformer(ConvertUtils.dp2px(50f),
                         ConvertUtils.dp2px(130f)));
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
+        final SwitchCompat headerSc=findViewById(R.id.sc_header);
+        final SwitchCompat footerSc=findViewById(R.id.sc_footer);
         final TextView header1 = findViewById(R.id.tv_header_1);
         final TextView header2 = findViewById(R.id.tv_header_2);
 
@@ -48,6 +51,28 @@ public class VerticalActivity extends AppCompatActivity {
                 header2.setVisibility(View.VISIBLE);
             }
         }, 3000);
+
+        headerSc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (expandLayout.getCurrentHeaderState()== PullExpandLayout.STATE_EXPANDED) {
+                    expandLayout.setHeaderExpanded(false);
+                }else if (expandLayout.getCurrentHeaderState()==PullExpandLayout.STATE_COLLAPSED){
+                    expandLayout.setHeaderExpanded(true);
+                }
+            }
+        });
+
+        footerSc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (expandLayout.getCurrentFooterState()== PullExpandLayout.STATE_EXPANDED) {
+                    expandLayout.setFooterExpanded(false);
+                }else if (expandLayout.getCurrentFooterState()==PullExpandLayout.STATE_COLLAPSED){
+                    expandLayout.setFooterExpanded(true);
+                }
+            }
+        });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
@@ -85,6 +110,29 @@ public class VerticalActivity extends AppCompatActivity {
 
         expandLayout.addOnPullExpandStateListener(new SimpleOnPullExpandStateListener() {
 
+            @Override
+            public void onHeaderStateChanged(PullExpandLayout layout, int state) {
+                super.onHeaderStateChanged(layout, state);
+                if (state== PullExpandLayout.STATE_EXPANDED) {
+                    headerSc.setChecked(true);
+                    headerSc.setText("关闭 Header");
+                }else if (state==PullExpandLayout.STATE_COLLAPSED){
+                    headerSc.setChecked(false);
+                    headerSc.setText("打开 Header");
+                }
+            }
+
+            @Override
+            public void onFooterStateChanged(PullExpandLayout layout, int state) {
+                super.onFooterStateChanged(layout, state);
+                if (state== PullExpandLayout.STATE_EXPANDED) {
+                    footerSc.setChecked(true);
+                    footerSc.setText("关闭 Footer");
+                }else if (state==PullExpandLayout.STATE_COLLAPSED){
+                    footerSc.setChecked(false);
+                    footerSc.setText("打开 Footer");
+                }
+            }
         });
     }
 

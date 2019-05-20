@@ -582,50 +582,48 @@ public class PullExpandLayout extends HeaderFooterLayout {
         //上滑
         boolean moveUp = mDeltaY < 0;
         //用户禁止了下拉操作，则不控制
-        if (!mIsHeaderEnabled && isTop && mDeltaY > 0) {
+        if (!mIsHeaderEnabled && isTop && moveDown) {
             return false;
         }
         //用户禁止了上拉操作，则不控制
-        if (!mIsFooterEnabled && isBottom && mDeltaY < 0) {
+        if (!mIsFooterEnabled && isBottom && moveUp) {
             return false;
         }
         if (mHeaderView != null) {
             //其中的20是一个防止触摸误差的偏移量
-            if (moveDown) {
-                if (isTop && mDeltaY > 0 || getScrollY() < -20) {
-                    if (mIsDebug) {
-                        Log.d(TAG, "isNeedSelfMove moveDown Header");
-                    }
-                    return true;
+            //getScrollY() < -20 有可能在手动开启的 Header，contentView并没有到达顶部 上滑后再下滑
+            //如果 Header 已经拉到头了则不拦截
+            if (moveDown && (isTop || (getScrollY() < -20 && Math.abs(getScrollY()) < mHeaderHeight))) {
+                if (mIsDebug) {
+                    Log.d(TAG, "isNeedSelfMove moveDown Header");
                 }
+                return true;
             }
-            if (moveUp) {
+            if (moveUp && getScrollY() < -20) {
                 //上滑的时候 Header 有可能展开了也有可能没展开
-                if (getScrollY() < -20 && isTop) {
-                    if (mIsDebug) {
-                        Log.d(TAG, "isNeedSelfMove moveUp Header");
-                    }
-                    return true;
+                //有可能通过方法展开后，contentView可能不在顶部
+                if (mIsDebug) {
+                    Log.d(TAG, "isNeedSelfMove moveUp Header");
                 }
+                return true;
             }
         }
         if (mFooterView != null) {
-            if (moveUp) {
-                if (isBottom && mDeltaY < 0 || getScrollY() > 20) {
-                    if (mIsDebug) {
-                        Log.d(TAG, "isNeedSelfMove moveUp Footer");
-                    }
-                    return true;
+            //getScrollY() > 20 有可能在手动开启的 Footer，contentView并没有到达底部 下滑后再上滑
+            //如果 Footer 已经拉到头了，则不拦截
+            if (moveUp && (isBottom || (getScrollY() > 20 && getScrollY() < mFooterHeight))) {
+                if (mIsDebug) {
+                    Log.d(TAG, "isNeedSelfMove moveUp Footer");
                 }
+                return true;
             }
-            if (moveDown) {
+            if (moveDown && getScrollY() > 20) {
                 //下滑的时候 Footer 有可能展开了也有可能没展开
-                if (getScrollY() > 20 && isBottom) {
-                    if (mIsDebug) {
-                        Log.d(TAG, "isNeedSelfMove moveDown Footer");
-                    }
-                    return true;
+                //有可能通过方法展开后，contentView可能不在底部
+                if (mIsDebug) {
+                    Log.d(TAG, "isNeedSelfMove moveDown Footer");
                 }
+                return true;
             }
         }
         return false;
@@ -652,50 +650,48 @@ public class PullExpandLayout extends HeaderFooterLayout {
         //左滑
         boolean moveLeft = mDeltaX < 0;
         //用户禁止了下拉操作，则不控制
-        if (!mIsHeaderEnabled && isLeft && mDeltaX > 0) {
+        if (!mIsHeaderEnabled && isLeft && moveRight) {
             return false;
         }
         //用户禁止了上拉操作，则不控制
-        if (!mIsFooterEnabled && isRight && mDeltaX < 0) {
+        if (!mIsFooterEnabled && isRight && moveLeft) {
             return false;
         }
         if (mHeaderView != null) {
             //其中的20是一个防止触摸误差的偏移量
-            if (moveRight) {
-                if (isLeft && mDeltaX > 0 || getScrollX() < -20) {
-                    if (mIsDebug) {
-                        Log.d(TAG, "isNeedSelfMove moveRight Header");
-                    }
-                    return true;
+            //getScrollX() < -20 有可能在手动开启的 Header，contentView并没有到达最左侧 左滑后再右滑
+            //如果 Header 已经拉到头了则不拦截
+            if (moveRight && (isLeft || (getScrollX() < -20 && Math.abs(getScrollX()) < mHeaderWidth))) {
+                if (mIsDebug) {
+                    Log.d(TAG, "isNeedSelfMove moveRight Header");
                 }
+                return true;
             }
-            if (moveLeft) {
+            if (moveLeft && getScrollX() < -20) {
                 //上滑的时候 Header 有可能展开了也有可能没展开
-                if (getScrollX() < -20 && isLeft) {
-                    if (mIsDebug) {
-                        Log.d(TAG, "isNeedSelfMove moveLeft Header");
-                    }
-                    return true;
+                //有可能通过方法展开后，contentView可能不在最左侧
+                if (mIsDebug) {
+                    Log.d(TAG, "isNeedSelfMove moveLeft Header");
                 }
+                return true;
             }
         }
         if (mFooterView != null) {
-            if (moveLeft) {
-                if (isRight && mDeltaX < 0 || getScrollX() > 20) {
-                    if (mIsDebug) {
-                        Log.d(TAG, "isNeedSelfMove moveLeft Footer");
-                    }
-                    return true;
+            //getScrollX() > 20 有可能在手动开启的 Footer，contentView并没有到达最右侧 右滑后再左滑
+            //如果 Footer 已经拉到头了则不拦截
+            if (moveLeft && (isRight || (getScrollX() > 20 && getScrollX() < mFooterWidth))) {
+                if (mIsDebug) {
+                    Log.d(TAG, "isNeedSelfMove moveLeft Footer");
                 }
+                return true;
             }
-            if (moveRight) {
+            if (moveRight && getScrollX() > 20) {
                 //右滑的时候 Footer 有可能展开了也有可能没展开
-                if (getScrollX() > 20 && isRight) {
-                    if (mIsDebug) {
-                        Log.d(TAG, "isNeedSelfMove moveRight Footer");
-                    }
-                    return true;
+                //有可能通过方法展开后，contentView可能不在最右侧
+                if (mIsDebug) {
+                    Log.d(TAG, "isNeedSelfMove moveRight Footer");
                 }
+                return true;
             }
         }
         return false;
