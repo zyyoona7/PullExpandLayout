@@ -1,58 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/sc_header"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:textSize="16sp"
-        android:paddingEnd="16dp"
         android:paddingStart="16dp"
-        android:text="打开 Header"/>
+        android:paddingEnd="16dp"
+        android:text="打开 Header"
+        android:textSize="16sp" />
 
     <com.zyyoona7.pullexpandx.PullExpandLayout
         android:id="@+id/pull_expand_layout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        app:pel_headerMaxDragDistanceRate="1.3"
-        app:pel_dragType="fixed_foreground">
+        app:pel_dragType="fixed_foreground"
+        app:pel_headerMaxDragDistanceRate="1.3">
 
-        <FrameLayout
+        <com.zyyoona7.pullexpandx.PullExpandLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/colorAccent">
+            android:layout_height="200dp"
+            android:background="@color/colorAccent"
+            android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/tv_header_1"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_gravity="center"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimaryDark"
                 android:gravity="center"
-                android:text="HEADER"
-                android:textSize="26sp" />
+                android:text="Header"
+                android:textSize="18sp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/header_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
 
             <TextView
-                android:id="@+id/tv_header_2"
-                android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:layout_gravity="center"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimary"
                 android:gravity="center"
-                android:text="HEADER"
-                android:textSize="26sp"
-                android:visibility="gone" />
-        </FrameLayout>
+                android:text="Footer"
+                android:textSize="18sp" />
+        </com.zyyoona7.pullexpandx.PullExpandLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@android:color/white"/>
+            android:background="@android:color/white" />
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -67,12 +69,13 @@
                 android:textSize="26sp" />
         </FrameLayout>
     </com.zyyoona7.pullexpandx.PullExpandLayout>
+
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/sc_footer"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:textSize="16sp"
-        android:paddingEnd="16dp"
         android:paddingStart="16dp"
-        android:text="打开 Footer"/>
+        android:paddingEnd="16dp"
+        android:text="打开 Footer"
+        android:textSize="16sp" />
 </LinearLayout>

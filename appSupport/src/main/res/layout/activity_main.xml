@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -23,30 +22,33 @@
         app:pel_dragType="fixed_foreground"
         app:pel_headerMaxDragDistanceRate="1.1">
 
-        <FrameLayout
+        <com.zyyoona7.pullexpand.PullExpandLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/colorAccent">
+            android:layout_height="200dp"
+            android:background="@color/colorAccent"
+            android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/tv_header_1"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_gravity="center"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimary"
                 android:gravity="center"
-                android:text="HEADER"
-                android:textSize="26sp" />
+                android:text="Header"
+                android:textSize="18sp" />
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/rv_header_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
 
             <TextView
-                android:id="@+id/tv_header_2"
-                android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:layout_gravity="center"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:background="@color/colorPrimaryDark"
                 android:gravity="center"
-                android:text="HEADER"
-                android:textSize="26sp"
-                android:visibility="gone" />
-        </FrameLayout>
+                android:text="Footer"
+                android:textSize="18sp" />
+        </com.zyyoona7.pullexpand.PullExpandLayout>
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/recycler_view"

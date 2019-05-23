@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.blankj.utilcode.util.ConvertUtils;
 import com.zyyoona7.pullexpandlayout.R;
+import com.zyyoona7.pullexpandlayout.adapter.HorizontalAdapter;
 import com.zyyoona7.pullexpandlayout.adapter.VerticalAdapter;
 import com.zyyoona7.pullexpandlayout.transformer.ParallaxGamePullExpandTransformer;
 import com.zyyoona7.pullexpandx.PullExpandLayout;
@@ -40,18 +41,9 @@ public class VerticalActivity extends AppCompatActivity {
                 new ParallaxGamePullExpandTransformer(ConvertUtils.dp2px(50f),
                         ConvertUtils.dp2px(130f)));
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
+        RecyclerView headerRv=findViewById(R.id.header_content);
         final SwitchCompat headerSc=findViewById(R.id.sc_header);
         final SwitchCompat footerSc=findViewById(R.id.sc_footer);
-        final TextView header1 = findViewById(R.id.tv_header_1);
-        final TextView header2 = findViewById(R.id.tv_header_2);
-
-        header1.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                header1.setVisibility(View.GONE);
-                header2.setVisibility(View.VISIBLE);
-            }
-        }, 3000);
 
         headerSc.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,6 +66,10 @@ public class VerticalActivity extends AppCompatActivity {
                 }
             }
         });
+
+        HorizontalAdapter adapter1=HorizontalAdapter.newInstance(10);
+        headerRv.setLayoutManager(new LinearLayoutManager(this,LinearLayoutManager.HORIZONTAL,false));
+        headerRv.setAdapter(adapter1);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);

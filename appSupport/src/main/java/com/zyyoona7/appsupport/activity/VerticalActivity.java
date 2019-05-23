@@ -18,6 +18,7 @@ import android.widget.TextView;
 
 import com.blankj.utilcode.util.ConvertUtils;
 import com.zyyoona7.appsupport.R;
+import com.zyyoona7.appsupport.adapter.HorizontalAdapter;
 import com.zyyoona7.appsupport.adapter.VerticalAdapter;
 import com.zyyoona7.appsupport.transformer.ParallaxGamePullExpandTransformer;
 import com.zyyoona7.pullexpand.PullExpandLayout;
@@ -39,25 +40,17 @@ public class VerticalActivity extends AppCompatActivity {
                 new ParallaxGamePullExpandTransformer(ConvertUtils.dp2px(50f),
                         ConvertUtils.dp2px(130f)));
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
-        final TextView header1 = findViewById(R.id.tv_header_1);
-        final TextView header2 = findViewById(R.id.tv_header_2);
-        final SwitchCompat headerSc=findViewById(R.id.sc_header);
-        final SwitchCompat footerSc=findViewById(R.id.sc_footer);
+        RecyclerView headerRv = findViewById(R.id.rv_header_content);
+        final SwitchCompat headerSc = findViewById(R.id.sc_header);
+        final SwitchCompat footerSc = findViewById(R.id.sc_footer);
 
-        header1.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                header1.setVisibility(View.GONE);
-                header2.setVisibility(View.VISIBLE);
-            }
-        }, 3000);
 
         headerSc.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (expandLayout.getCurrentHeaderState()== PullExpandLayout.STATE_EXPANDED) {
+                if (expandLayout.getCurrentHeaderState() == PullExpandLayout.STATE_EXPANDED) {
                     expandLayout.setHeaderExpanded(false);
-                }else if (expandLayout.getCurrentHeaderState()==PullExpandLayout.STATE_COLLAPSED){
+                } else if (expandLayout.getCurrentHeaderState() == PullExpandLayout.STATE_COLLAPSED) {
                     expandLayout.setHeaderExpanded(true);
                 }
             }
@@ -66,9 +59,9 @@ public class VerticalActivity extends AppCompatActivity {
         footerSc.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (expandLayout.getCurrentFooterState()== PullExpandLayout.STATE_EXPANDED) {
+                if (expandLayout.getCurrentFooterState() == PullExpandLayout.STATE_EXPANDED) {
                     expandLayout.setFooterExpanded(false);
-                }else if (expandLayout.getCurrentFooterState()==PullExpandLayout.STATE_COLLAPSED){
+                } else if (expandLayout.getCurrentFooterState() == PullExpandLayout.STATE_COLLAPSED) {
                     expandLayout.setFooterExpanded(true);
                 }
             }
@@ -85,6 +78,10 @@ public class VerticalActivity extends AppCompatActivity {
         createHeaderAndFooter(adapter);
 
         recyclerView.setAdapter(adapter);
+
+        headerRv.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        headerRv.setAdapter(HorizontalAdapter.newInstance(10));
+
         expandLayout.addOnPullExpandChangedListener(new SimpleOnPullExpandChangedListener() {
 
             @Override
@@ -117,10 +114,10 @@ public class VerticalActivity extends AppCompatActivity {
             @Override
             public void onHeaderStateChanged(PullExpandLayout layout, int state) {
                 super.onHeaderStateChanged(layout, state);
-                if (state== PullExpandLayout.STATE_EXPANDED) {
+                if (state == PullExpandLayout.STATE_EXPANDED) {
                     headerSc.setChecked(true);
                     headerSc.setText("关闭 Header");
-                }else if (state==PullExpandLayout.STATE_COLLAPSED){
+                } else if (state == PullExpandLayout.STATE_COLLAPSED) {
                     headerSc.setChecked(false);
                     headerSc.setText("打开 Header");
                 }
@@ -129,10 +126,10 @@ public class VerticalActivity extends AppCompatActivity {
             @Override
             public void onFooterStateChanged(PullExpandLayout layout, int state) {
                 super.onFooterStateChanged(layout, state);
-                if (state== PullExpandLayout.STATE_EXPANDED) {
+                if (state == PullExpandLayout.STATE_EXPANDED) {
                     footerSc.setChecked(true);
                     footerSc.setText("关闭 Footer");
-                }else if (state==PullExpandLayout.STATE_COLLAPSED){
+                } else if (state == PullExpandLayout.STATE_COLLAPSED) {
                     footerSc.setChecked(false);
                     footerSc.setText("打开 Footer");
                 }

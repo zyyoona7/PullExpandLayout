@@ -41,11 +41,11 @@ public class PullExpandLayout extends HeaderFooterLayout {
     //阻尼效果比率 0-1之间，越大越顺畅
     private static final float DEFAULT_DRAG_RATE = 0.4f;
     //拖拽类型
-    //跟随ContentView平移
+    //Header Footer 跟随ContentView平移
     public static final int DRAG_TYPE_TRANSLATE = 0;
-    //滚动在ContentView之后
+    //Header Footer 固定在ContentView之后
     public static final int DRAG_TYPE_FIXED_BEHIND = 1;
-    //固定在ContentView之前
+    //Header Footer 固定在ContentView之前
     public static final int DRAG_TYPE_FIXED_FOREGROUND = 2;
 
     //Header 或者 Footer 状态
@@ -57,6 +57,11 @@ public class PullExpandLayout extends HeaderFooterLayout {
     public static final int STATE_COLLAPSING = 2;
     //已经收缩
     public static final int STATE_COLLAPSED = 3;
+
+    //拖拽方向
+    private static final int DIRECTION_NONE = 0;
+    private static final int DIRECTION_VERTICAL = 1;
+    private static final int DIRECTION_HORIZONTAL = 2;
 
     private boolean mIsDebug = false;
 
@@ -131,8 +136,11 @@ public class PullExpandLayout extends HeaderFooterLayout {
     //手势检测 用于检测当前手势和滑动方向
     private VelocityTracker mVelocityTracker;
     private int mMaximumVelocity;
-//    private float mCurrentVelocityY;
-//    private float mCurrentVelocityX;
+    //private float mCurrentVelocityY;
+    //private float mCurrentVelocityX;
+    private int mTouchSlop;
+    //拖动方向 ，竖直方向只拦截竖直方向滑动，反之也如此
+    private int mDragDirection = DIRECTION_NONE;
 
     private List<OnPullExpandChangedListener> mOnPullExpandChangedListeners;
     private List<OnPullExpandStateListener> mOnPullExpandStateListeners;
@@ -157,6 +165,7 @@ public class PullExpandLayout extends HeaderFooterLayout {
         initAttrs(context, attrs);
         ViewConfiguration configuration = ViewConfiguration.get(context);
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
+        mTouchSlop = configuration.getScaledTouchSlop();
         mScroller = new Scroller(context);
     }
 
@@ -541,8 +550,10 @@ public class PullExpandLayout extends HeaderFooterLayout {
                 computeScrollToState(true);
                 callReleaseChangedListeners();
                 mVelocityTracker.clear();//清空速度追踪器
+                mDragDirection = DIRECTION_NONE;
                 break;
             case MotionEvent.ACTION_CANCEL:
+                mDragDirection = DIRECTION_NONE;
                 mVelocityTracker.clear();//清空速度追踪器
                 break;
         }
@@ -570,10 +581,12 @@ public class PullExpandLayout extends HeaderFooterLayout {
         if (mOrientation != VERTICAL) {
             return false;
         }
-        //垂直布局 横向拖拽距离大于竖直距离则不拦截
-        if (Math.abs(mDeltaY) <= Math.abs(mDeltaX)) {
+        //垂直布局 只有检测为竖直方向滑动时才继续判断
+        checkDragVerticalDirection();
+        if (mDragDirection != DIRECTION_VERTICAL) {
             return false;
         }
+
         boolean isTop = isChildScrollToTop();
         boolean isBottom = isChildScrollToBottom();
         //下滑
@@ -638,8 +651,9 @@ public class PullExpandLayout extends HeaderFooterLayout {
         if (mOrientation != HORIZONTAL) {
             return false;
         }
-        //水平布局 竖直拖拽距离大于水平距离则不拦截
-        if (Math.abs(mDeltaX) <= Math.abs(mDeltaY)) {
+        //水平布局 只有检测为水平方向滑动时才继续判断
+        checkDragHorizontalDirection();
+        if (mDragDirection != DIRECTION_HORIZONTAL) {
             return false;
         }
         boolean isLeft = isChildScrollToLeft();
@@ -694,6 +708,39 @@ public class PullExpandLayout extends HeaderFooterLayout {
             }
         }
         return false;
+    }
+
+    /**
+     * 检查垂直拖拽方向，如果是横向拖拽则不拦截事件
+     */
+    private void checkDragVerticalDirection() {
+        if (mDragDirection == DIRECTION_HORIZONTAL) {
+            return;
+        }
+        if (mDragDirection == DIRECTION_VERTICAL
+                || (Math.abs(mDeltaY) >= mTouchSlop && Math.abs(mDeltaX) < Math.abs(mDeltaY))) {
+            mDragDirection = DIRECTION_VERTICAL;
+            if (mIsDebug) {
+                Log.d(TAG, "checkDragDirection: direction vertical ");
+            }
+        }
+    }
+
+    /**
+     * 检查横向拖拽方向，如果是垂直拖拽则不拦截事件
+     */
+    private void checkDragHorizontalDirection() {
+        if (mDragDirection == DIRECTION_VERTICAL) {
+            return;
+        }
+        if (mDragDirection == DIRECTION_HORIZONTAL
+                || (Math.abs(mDeltaY) < Math.abs(mDeltaX) && Math.abs(mDeltaX) > mTouchSlop
+                && mDragDirection != DIRECTION_VERTICAL)) {
+            mDragDirection = DIRECTION_HORIZONTAL;
+            if (mIsDebug) {
+                Log.d(TAG, "checkDragDirection: direction horizontal ");
+            }
+        }
     }
 
     /**
@@ -1626,6 +1673,9 @@ public class PullExpandLayout extends HeaderFooterLayout {
      * @param isAnim   是否伴随动画
      */
     public void setHeaderExpanded(boolean isExpand, boolean isAnim) {
+        if (!mIsHeaderEnabled) {
+            return;
+        }
         if (isExpand) {
             openHeader(isAnim);
         } else {
@@ -1649,6 +1699,9 @@ public class PullExpandLayout extends HeaderFooterLayout {
      * @param isAnim   是否伴随动画
      */
     public void setFooterExpanded(boolean isExpand, boolean isAnim) {
+        if (!mIsFooterEnabled) {
+            return;
+        }
         if (isExpand) {
             openFooter(isAnim);
         } else {
